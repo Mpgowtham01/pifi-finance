@@ -1,0 +1,20 @@
+{
+  "name": "pifi-finance",
+  "private": true,
+  "version": "0.1.0",
+  "description": "PiFi — co-operative / NBFC finance back-office (rebuild). backend/ and frontend/ are two independent projects.",
+  "scripts": {
+    "setup": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently -n api,web -c cyan,magenta \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd backend && npm start",
+    "seed": "cd backend && npm run seed",
+    "seed-customers": "cd backend && npm run seed-customers"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

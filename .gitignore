@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+
+# Seeded customer data (real PII from the reference app) — keep local, out of git
+backend/src/data/
