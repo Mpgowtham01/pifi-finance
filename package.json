@@ -6,7 +6,7 @@
   "scripts": {
     "setup": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "dev": "concurrently -n api,web -c cyan,magenta \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
-    "build": "cd frontend && npm install && npm run build",
+    "build": "node scripts/build.mjs",
     "start": "cd backend && npm start",
     "seed": "cd backend && npm run seed",
     "seed-customers": "cd backend && npm run seed-customers",

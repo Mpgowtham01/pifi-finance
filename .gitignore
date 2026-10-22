@@ -1,9 +1,15 @@
-node_modules/
-dist/
-.env
-.env.local
+node_modules
+dist
+.vite
+*.local
 *.log
 .DS_Store
 
-# Seeded customer data (real PII from the reference app) — keep local, out of git
+# secrets — the real one lives in backend/.env
+.env
+.env.*
+!.env.example
+
+# Real customer data crawled from the system being replaced — names,
+# addresses, mobiles, id numbers. Never commit it.
 backend/src/data/

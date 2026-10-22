@@ -1,0 +1,31 @@
+# One web service that runs the API and serves the built React app.
+#
+# On Render: New → Blueprint → pick this repository. It reads this file,
+# then asks you for MONGODB_URI. Everything else is set here.
+services:
+  - type: web
+    name: pifi-finance
+    runtime: node
+    plan: free
+    region: singapore # closest to Tamil Nadu
+    branch: main
+
+    buildCommand: npm run build
+    startCommand: npm start
+
+    # Render restarts the service if this stops answering.
+    healthCheckPath: /api/health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: TOKEN_HOURS
+        value: "12"
+      # Render generates this once and keeps it. Changing it signs everyone out.
+      - key: JWT_SECRET
+        generateValue: true
+      # Asked for when the blueprint is created — never stored in the repo.
+      - key: MONGODB_URI
+        sync: false
