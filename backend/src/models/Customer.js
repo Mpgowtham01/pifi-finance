@@ -12,6 +12,13 @@ const idProofSchema = new mongoose.Schema(
   { _id: false }
 )
 
+// The photo and the pledged-jewel photo live in the document itself (both are
+// are never sent with a normal read — they are served by their own endpoints.
+const imageSchema = new mongoose.Schema(
+  { data: Buffer, contentType: { type: String, default: 'image/jpeg' } },
+  { _id: false }
+)
+
 const customerSchema = new mongoose.Schema(
   {
     branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', required: true, index: true },
@@ -61,8 +68,10 @@ const customerSchema = new mongoose.Schema(
     smsOptIn: { type: Boolean, default: true },
     deductTds: { type: Boolean, default: false },
 
-    photoUrl: { type: String, default: '' },
-    signatureUrl: { type: String, default: '' },
+    photo: { type: imageSchema, select: false },
+    jewelPhoto: { type: imageSchema, select: false },
+    hasPhoto: { type: Boolean, default: false },
+    hasJewelPhoto: { type: Boolean, default: false },
     remarks: { type: String, trim: true, default: '' },
 
     active: { type: Boolean, default: true },
@@ -83,6 +92,8 @@ customerSchema.methods.toJSONSafe = function () {
   o.id = this._id.toString()
   delete o._id
   delete o.__v
+  delete o.photo
+  delete o.jewelPhoto
   return o
 }
 

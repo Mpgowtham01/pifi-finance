@@ -9,7 +9,8 @@
     "build": "cd frontend && npm install && npm run build",
     "start": "cd backend && npm start",
     "seed": "cd backend && npm run seed",
-    "seed-customers": "cd backend && npm run seed-customers"
+    "seed-customers": "cd backend && npm run seed-customers",
+    "fetch-photos": "cd backend && npm run fetch-photos --"
   },
   "devDependencies": {
     "concurrently": "^10.0.5"

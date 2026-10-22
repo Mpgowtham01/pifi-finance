@@ -33,7 +33,8 @@ app.use(
   })
 )
 
-app.use(express.json({ limit: '1mb' }))
+// Customer photo + signature travel as data URLs inside the JSON body.
+app.use(express.json({ limit: '4mb' }))
 app.use(cookieParser())
 app.use('/api', rateLimit({ windowMs: 60 * 1000, limit: 300, standardHeaders: true, legacyHeaders: false }))
 
@@ -51,6 +52,10 @@ if (config.isProd) {
 }
 
 app.use((err, _req, res, _next) => {
+  // Routes raise httpError(status, message) for everything the user can fix.
+  if (err?.status >= 400 && err.status < 500) {
+    return res.status(err.status).json({ error: err.message })
+  }
   console.error(err)
   if (err?.name === 'ValidationError') {
     return res.status(400).json({ error: Object.values(err.errors)[0]?.message || 'Invalid data.' })

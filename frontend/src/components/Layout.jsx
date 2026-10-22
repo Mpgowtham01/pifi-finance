@@ -9,9 +9,9 @@ const MENU = [
     key: 'customer', label: 'Customer', ico: '👤',
     children: [
       { label: 'Customer List', route: 'customers' },
-      { label: 'New Customer', route: 'customer-new' },
-      { label: 'Customer Enquiry', soon: 'Customer Enquiry' },
-      { label: 'Customer Reports', soon: 'Customer Reports' },
+      { label: 'Customer Master', route: 'customer-new' },
+      { label: 'Customer Enquiry', route: 'customer-enquiry' },
+      { label: "List of A/c's for Customer", route: 'customer-reports' },
     ],
   },
   {
@@ -125,10 +125,16 @@ function ownerOf(routeName) {
   return null
 }
 
-const ALL_TITLES = { customers: 'Customers', 'customer-new': 'New customer', 'customer-edit': 'Edit customer' }
+const ALL_TITLES = {
+  customers: 'Customer List',
+  'customer-new': 'Customer Master',
+  'customer-edit': 'Customer Master',
+  'customer-enquiry': 'Customer Enquiry',
+  'customer-reports': 'Customer Reports',
+}
 for (const it of MENU) {
-  if (it.route) ALL_TITLES[it.route] = it.label
-  for (const c of it.children || []) if (c.route) ALL_TITLES[c.route] = c.label
+  if (it.route) ALL_TITLES[it.route] ??= it.label
+  for (const c of it.children || []) if (c.route) ALL_TITLES[c.route] ??= c.label
 }
 
 export default function Layout({ session, route, navigate, onLogout, onSwitchBranch, children }) {

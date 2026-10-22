@@ -8,7 +8,10 @@ const branchSchema = new mongoose.Schema(
     code: { type: String, required: true, unique: true, trim: true }, // e.g. "201"
     name: { type: String, required: true, trim: true }, // e.g. "Nagercoil"
     companyName: { type: String, default: 'Thangarathnam Finance', trim: true },
+    // Printed in the header of every report, like the old Crystal reports did.
     address: { type: String, trim: true, default: '' },
+    city: { type: String, trim: true, default: '' },
+    pincode: { type: String, trim: true, default: '' },
     phone: { type: String, trim: true, default: '' },
     active: { type: Boolean, default: true },
   },
@@ -22,6 +25,10 @@ branchSchema.methods.toSafe = function () {
     name: this.name,
     label: `${this.code}-${this.name}`,
     companyName: this.companyName,
+    address: this.address,
+    city: this.city,
+    pincode: this.pincode,
+    phone: this.phone,
     active: this.active,
   }
 }

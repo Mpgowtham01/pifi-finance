@@ -6,23 +6,33 @@ import Branch from './models/Branch.js'
 import User from './models/User.js'
 import mongoose from 'mongoose'
 
+// Addresses are the ones the old system prints at the top of its reports.
+// City and pincode are only filled where the source actually states them.
 const BRANCHES = [
-  { code: '201', name: 'Nagercoil' },
-  { code: '202', name: 'Aruppukottai' },
-  { code: '203', name: 'Kovilpatti' },
+  {
+    code: '201', name: 'Nagercoil',
+    address: 'no- 5A ,PUTHAN BUNGLOW, KATTABOMMAN JUNCTION,MANIYADICHANKOVIL',
+    city: 'NAGERCOIL', pincode: '629002',
+  },
+  {
+    code: '202', name: 'Aruppukottai',
+    address: '279/3,SIVAN KOVIL OPPOSITE,MADURAI ROAD, ARUPPUKOTTAI -626101',
+    city: 'ARUPPUKOTTAI', pincode: '626101',
+  },
+  {
+    code: '203', name: 'Kovilpatti',
+    address: '135/32,First floor,S.p.complex,Opp kamarajar Statue,IDBI bank upstairs',
+    city: '', pincode: '',
+  },
 ]
 
 async function run() {
   await connectDB()
 
   for (const b of BRANCHES) {
-    const existing = await Branch.findOne({ code: b.code })
-    if (existing) {
-      console.log(`Branch ${b.code}-${b.name} already exists.`)
-    } else {
-      await Branch.create(b)
-      console.log(`Created branch ${b.code}-${b.name}.`)
-    }
+    // Upsert, so re-running the seed also refreshes the printed address.
+    const res = await Branch.updateOne({ code: b.code }, { $set: b }, { upsert: true })
+    console.log(`Branch ${b.code}-${b.name}: ${res.upsertedCount ? 'created' : 'updated'}.`)
   }
 
   const userCount = await User.estimatedDocumentCount()

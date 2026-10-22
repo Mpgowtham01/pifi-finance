@@ -7,7 +7,7 @@
 //
 // Usage (run in YOUR terminal):
 //   # PowerShell
-//   $env:REF_URL="http://HOST:PORT"; $env:REF_USER="200001"; $env:REF_PASS="qwert"
+//   $env:REF_URL="http://HOST:PORT"; $env:REF_USER="<user>"; $env:REF_PASS="<password>"
 //   node tools/crawl-full.mjs            # PROBE: fetch 1 customer, print the fields
 //   node tools/crawl-full.mjs --all      # enrich every customer in every branch
 //   # then: npm run seed-customers

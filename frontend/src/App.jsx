@@ -5,6 +5,8 @@ import Layout from './components/Layout.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import CustomerList from './components/CustomerList.jsx'
 import CustomerForm from './components/CustomerForm.jsx'
+import CustomerEnquiry from './components/CustomerEnquiry.jsx'
+import CustomerReports from './components/CustomerReports.jsx'
 
 export default function App() {
   const [session, setSession] = useState(null) // { user, branch, branches }
@@ -50,10 +52,16 @@ export default function App() {
       page = <CustomerList navigate={navigate} />
       break
     case 'customer-new':
-      page = <CustomerForm navigate={navigate} />
+      page = <CustomerForm key="new" navigate={navigate} />
       break
     case 'customer-edit':
-      page = <CustomerForm navigate={navigate} id={route.params.id} />
+      page = <CustomerForm key={route.params.id} navigate={navigate} id={route.params.id} />
+      break
+    case 'customer-enquiry':
+      page = <CustomerEnquiry key={route.params.id || 'none'} navigate={navigate} id={route.params.id} />
+      break
+    case 'customer-reports':
+      page = <CustomerReports navigate={navigate} custId={route.params.custId} />
       break
     case 'soon':
       page = (
