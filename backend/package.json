@@ -9,7 +9,8 @@
     "start": "node src/index.js",
     "seed": "node src/seed.js",
     "seed-customers": "node src/seed-customers.js",
-    "fetch-photos": "node tools/fetch-photos.mjs"
+    "fetch-photos": "node tools/fetch-photos.mjs",
+    "seed-settings": "node src/seed-settings.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

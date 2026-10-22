@@ -41,6 +41,7 @@ router.get('/', async (req, res) => {
     name: c.name,
     mobile: c.mobile,
     city: c.city,
+    hasPhoto: c.hasPhoto,
     createdAt: c.createdAt,
   }))
 

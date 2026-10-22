@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../api.js'
 
 const MODULE_ROUTE = {
@@ -12,7 +12,14 @@ const MODULE_ROUTE = {
   reminders: ['soon', 'Reminders'],
 }
 
-export default function Dashboard({ navigate }) {
+const MODULE_ICON = {
+  customer: '👤', savings: '💰', fd: '🏦', rd: '🔁',
+  jewel: '💍', loans: '📄', cashbank: '🧾', reminders: '🔔',
+}
+
+const SLIDE_MS = 5000
+
+export default function Dashboard({ navigate, session }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
 
@@ -21,7 +28,7 @@ export default function Dashboard({ navigate }) {
   }, [])
 
   if (error) return <div className="notice error">{error}</div>
-  if (!data) return <div className="muted">Loading…</div>
+  if (!data) return <div className="dash-skeleton" aria-busy="true" />
 
   const today = new Date().toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -34,34 +41,40 @@ export default function Dashboard({ navigate }) {
 
   return (
     <div className="dash">
-      {/* Hero */}
-      <div className="dash-hero">
-        <div>
-          <h2 style={{ margin: 0, fontSize: 22 }}>Branch overview</h2>
-          <p className="muted" style={{ margin: '4px 0 0' }}>{today}</p>
+      <section className="dash-hero rise" style={{ '--i': 0 }}>
+        <div className="hero-blobs" aria-hidden="true">
+          <span />
+          <span />
         </div>
-        <button className="btn primary" onClick={() => navigate('customer-new')}>+ New customer</button>
-      </div>
-
-      {/* KPI tiles */}
-      <div className="kpi-row">
-        {data.kpis.map((k) => (
-          <div className="kpi" key={k.key}>
-            <div className="kpi-ico">{k.icon}</div>
-            <div className="kpi-body">
-              <div className="kpi-label">{k.label}</div>
-              <div className="kpi-value">{k.money ? `₹${fmt(k.value)}` : fmt(k.value)}</div>
-              <div className="kpi-hint muted">{k.hint}</div>
-            </div>
+        <div className="hero-left">
+          {session?.branch && <span className="hero-chip">{session.branch.label}</span>}
+          <h2>Branch overview</h2>
+          <p>{today}</p>
+          <div className="hero-actions">
+            <button className="btn primary" onClick={() => navigate('customer-new')}>
+              + New customer
+            </button>
+            <button className="btn hero-ghost" onClick={() => navigate('customers')}>
+              Customer list
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+        <KpiSlider kpis={data.kpis} />
+      </section>
 
-      {/* Module cards */}
-      <div className="module-grid">
-        {data.modules.map((m) => (
-          <button className={`module-card tone-${m.tone}`} key={m.key} onClick={() => openModule(m.key)}>
-            <div className="module-title">{m.title}</div>
+      <section className="module-grid">
+        {data.modules.map((m, i) => (
+          <button
+            className={`module-card tone-${m.tone} rise`}
+            style={{ '--i': i + 1 }}
+            key={m.key}
+            onClick={() => openModule(m.key)}
+          >
+            <div className="module-top">
+              <span className="module-ico">{MODULE_ICON[m.key] || '•'}</span>
+              <span className="module-title">{m.title}</span>
+              <span className="module-go">→</span>
+            </div>
             <div className="module-stats">
               {m.stats.map(([label, val]) => (
                 <div className="module-stat" key={label}>
@@ -72,11 +85,10 @@ export default function Dashboard({ navigate }) {
             </div>
           </button>
         ))}
-      </div>
+      </section>
 
-      {/* Chart + recent */}
-      <div className="dash-cols">
-        <div className="card">
+      <section className="dash-cols">
+        <div className="card rise" style={{ '--i': 9 }}>
           <div className="card-head">
             <h3 style={{ margin: 0 }}>New customers</h3>
             <span className="muted" style={{ fontSize: 13 }}>last 6 months</span>
@@ -86,37 +98,152 @@ export default function Dashboard({ navigate }) {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card rise" style={{ '--i': 10 }}>
           <div className="card-head">
             <h3 style={{ margin: 0 }}>Recent customers</h3>
-            <button className="btn ghost" onClick={() => navigate('customers')}>View all</button>
+            <button className="btn ghost" onClick={() => navigate('customers')}>
+              View all
+            </button>
           </div>
           <div className="recent-list">
             {data.recent.length === 0 && <div className="muted" style={{ padding: 18 }}>No customers yet.</div>}
-            {data.recent.map((c) => (
-              <button className="recent-item" key={c.id} onClick={() => navigate('customer-edit', { id: c.id })}>
-                <span className="recent-avatar">{(c.name || '?').slice(0, 1).toUpperCase()}</span>
+            {data.recent.map((c, i) => (
+              <button
+                className="recent-item"
+                style={{ '--i': i }}
+                key={c.id}
+                onClick={() => navigate('customer-enquiry', { id: c.id })}
+              >
+                <span className="recent-avatar">
+                  {c.hasPhoto ? (
+                    <img src={`/api/customers/${c.id}/photo`} alt="" loading="lazy" />
+                  ) : (
+                    (c.name || '?').slice(0, 1).toUpperCase()
+                  )}
+                </span>
                 <span className="recent-main">
                   <span className="recent-name">{c.name}</span>
                   <span className="muted" style={{ fontSize: 12 }}>
-                    {c.custId}{c.city ? ` · ${c.city}` : ''}
+                    {c.custId}
+                    {c.city ? ` · ${c.city}` : ''}
                   </span>
                 </span>
-                <span className="muted" style={{ fontSize: 12 }}>{new Date(c.createdAt).toLocaleDateString('en-GB')}</span>
+                <span className="muted" style={{ fontSize: 12 }}>
+                  {new Date(c.createdAt).toLocaleDateString('en-GB')}
+                </span>
               </button>
             ))}
           </div>
         </div>
+      </section>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------- the slider */
+
+// The branch totals, one at a time, moving on by themselves. Hovering or
+// focusing it holds the current slide so a figure can be read.
+function KpiSlider({ kpis }) {
+  const [at, setAt] = useState(0)
+  const [held, setHeld] = useState(false)
+  const n = kpis.length
+
+  useEffect(() => {
+    if (held || n < 2 || reducedMotion()) return
+    const t = setTimeout(() => setAt((i) => (i + 1) % n), SLIDE_MS)
+    return () => clearTimeout(t)
+  }, [at, held, n])
+
+  const go = (d) => setAt((i) => (i + d + n) % n)
+
+  return (
+    <div
+      className="kpi-slider"
+      onMouseEnter={() => setHeld(true)}
+      onMouseLeave={() => setHeld(false)}
+      onFocus={() => setHeld(true)}
+      onBlur={() => setHeld(false)}
+    >
+      <div className="kpi-track">
+        {kpis.map((k, i) => (
+          <article key={k.key} className={`kpi-slide ${slideState(i, at, n)}`} aria-hidden={i !== at}>
+            <span className="kpi-slide-ico">{k.icon}</span>
+            <span className="kpi-slide-label">{k.label}</span>
+            <strong className="kpi-slide-value">
+              {k.money && '₹'}
+              <CountUp to={k.value} run={i === at} />
+            </strong>
+            <span className="kpi-slide-hint">{k.hint}</span>
+          </article>
+        ))}
+      </div>
+
+      <div className="kpi-controls">
+        <button type="button" className="kpi-arrow" onClick={() => go(-1)} aria-label="Previous figure">
+          ‹
+        </button>
+        <div className="kpi-dots">
+          {kpis.map((k, i) => (
+            <button
+              key={k.key}
+              type="button"
+              className={`kpi-dot${i === at ? ' on' : ''}`}
+              onClick={() => setAt(i)}
+              aria-label={k.label}
+              aria-current={i === at}
+            >
+              <span className="kpi-dot-fill" style={{ animationDuration: `${SLIDE_MS}ms` }} />
+            </button>
+          ))}
+        </div>
+        <button type="button" className="kpi-arrow" onClick={() => go(1)} aria-label="Next figure">
+          ›
+        </button>
       </div>
     </div>
   )
+}
+
+const slideState = (i, at, n) => (i === at ? 'is-on' : i === (at - 1 + n) % n ? 'is-prev' : 'is-next')
+
+/* ------------------------------------------------------------- the pieces */
+
+// Counts up to the figure once its slide is showing.
+function CountUp({ to, run, ms = 900 }) {
+  const [v, setV] = useState(run ? to : 0)
+  const frame = useRef(0)
+
+  useEffect(() => {
+    if (!run) return
+    if (reducedMotion()) {
+      setV(to)
+      return
+    }
+    let start
+    const tick = (t) => {
+      start ??= t
+      const p = Math.min(1, (t - start) / ms)
+      setV(Math.round(to * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) frame.current = requestAnimationFrame(tick)
+    }
+    setV(0)
+    frame.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame.current)
+  }, [to, run, ms])
+
+  return <>{fmt(v)}</>
 }
 
 function fmt(n) {
   return new Intl.NumberFormat('en-IN').format(n)
 }
 
-// Single-series bar chart (inline SVG): indigo bars, rounded tops, per-bar hover.
+const reducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+// Single-series bar chart (inline SVG): indigo bars, rounded tops, per-bar
+// hover. Each bar grows from the baseline as the card appears.
 function BarChart({ trend }) {
   const [hover, setHover] = useState(null)
   const max = Math.max(1, ...trend.map((t) => t.count))
@@ -130,9 +257,13 @@ function BarChart({ trend }) {
 
   return (
     <div className="chart-wrap">
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="xMidYMid meet" role="img"
-        aria-label="New customers per month">
-        {/* baseline */}
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label="New customers per month"
+      >
         <line x1={padX} y1={H - padB} x2={W - padX} y2={H - padB} stroke="var(--border)" strokeWidth="1" />
         {trend.map((t, i) => {
           const h = allZero ? 0 : (t.count / max) * plotH
@@ -141,16 +272,31 @@ function BarChart({ trend }) {
           const on = hover === i
           return (
             <g key={i} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
-              {/* hover hit area */}
               <rect x={padX + slot * i} y={padT} width={slot} height={H - padB - padT} fill="transparent" />
-              {h > 0 && <rect x={x} y={y} width={barW} height={h} rx="4"
-                fill={on ? 'var(--primary-hover)' : 'var(--primary)'} />}
-              {/* value label */}
-              <text x={x + barW / 2} y={y - 6} textAnchor="middle" fontSize="12" fontWeight="600"
-                fill="var(--text)">{t.count || ''}</text>
-              {/* month label */}
-              <text x={padX + slot * i + slot / 2} y={H - padB + 18} textAnchor="middle" fontSize="12"
-                fill="var(--text-muted)">{t.label}</text>
+              {h > 0 && (
+                <rect
+                  className="bar"
+                  style={{ '--grow-delay': `${i * 70}ms`, transformOrigin: `center ${H - padB}px` }}
+                  x={x}
+                  y={y}
+                  width={barW}
+                  height={h}
+                  rx="4"
+                  fill={on ? 'var(--primary-hover)' : 'var(--primary)'}
+                />
+              )}
+              <text x={x + barW / 2} y={y - 6} textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--text)">
+                {t.count || ''}
+              </text>
+              <text
+                x={padX + slot * i + slot / 2}
+                y={H - padB + 18}
+                textAnchor="middle"
+                fontSize="12"
+                fill="var(--text-muted)"
+              >
+                {t.label}
+              </text>
             </g>
           )
         })}

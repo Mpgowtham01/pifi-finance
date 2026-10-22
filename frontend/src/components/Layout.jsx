@@ -1,10 +1,34 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-// EXACT top menu of the reference PiFi app (from Dashboard.aspx `ul.menu`):
-// Dashboard · Customer · Share · Savings · Term Deposit · Loan · Vouchers · Admin · Settings.
+// The top menu of the reference app, in its order (from Dashboard.aspx `ul.menu`):
+// Settings · Customer · Share · Savings · Term Deposit · Loan · Vouchers · Admin · Dashboard.
 // Each parent's children are the links on its *_Home.aspx page. No extra menus.
 const MENU = [
-  { key: 'dashboard', label: 'Dashboard', ico: '▦', route: 'dashboard' },
+  {
+    key: 'settings', label: 'Settings', ico: '⚙️',
+    // Same nineteen entries, in the same order, as the old Settings_Home.aspx.
+    children: [
+      { label: 'Branch Master', route: 'set-branch' },
+      { label: 'Schedule Master', route: 'set-schedule' },
+      { label: 'GL Master', route: 'set-gl' },
+      { label: 'GL Opening Balance', route: 'set-opening' },
+      { label: 'Scheme Master', route: 'set-scheme' },
+      { label: 'Interest Slab', route: 'set-slab' },
+      { label: 'General Settings', route: 'set-general' },
+      { label: 'List of Bank Accounts', route: 'set-bank-accounts' },
+      { label: 'Jewel Description', route: 'set-jewel' },
+      { label: 'JL Market Rate', route: 'set-gold-rate' },
+      { label: 'Deposit Period Master', route: 'set-deposit-period' },
+      { label: 'Id Proof Master', route: 'set-id-proof' },
+      { label: 'Bank Master', route: 'set-bank' },
+      { label: 'Calendar Settings', route: 'set-calendar' },
+      { label: 'Report Settings', route: 'set-report' },
+      { label: 'User Registration', route: 'set-users' },
+      { label: 'Change Password', route: 'set-password' },
+      { label: 'Permission Settings', route: 'set-permissions' },
+      { label: 'Interest Provision', route: 'set-provision' },
+    ],
+  },
   {
     key: 'customer', label: 'Customer', ico: '👤',
     children: [
@@ -93,35 +117,18 @@ const MENU = [
       { label: 'Messages', soon: 'Messages' },
     ],
   },
-  {
-    key: 'settings', label: 'Settings', ico: '⚙️',
-    children: [
-      { label: 'User Registration', soon: 'User Registration' },
-      { label: 'Permission Set', soon: 'Permission Set' },
-      { label: 'Change Password', soon: 'Change Password' },
-      { label: 'Branch Master', soon: 'Branch Master' },
-      { label: 'General Settings', soon: 'General Settings' },
-      { label: 'Report Settings', soon: 'Report Settings' },
-      { label: 'GL Master', soon: 'GL Master' },
-      { label: 'Scheme List', soon: 'Scheme List' },
-      { label: 'Interest Rate', soon: 'Interest Rate' },
-      { label: 'Deposit Period Master', soon: 'Deposit Period Master' },
-      { label: 'Interest Provisioning', soon: 'Interest Provisioning' },
-      { label: 'Jewel Master', soon: 'Jewel Master' },
-      { label: 'JL Market Rate', soon: 'JL Market Rate' },
-      { label: 'Bank Accounts', soon: 'Bank Accounts' },
-      { label: 'NEFT Banks', soon: 'NEFT Banks' },
-      { label: 'List of ID Proofs', soon: 'List of ID Proofs' },
-      { label: 'Opening Balance', soon: 'Opening Balance' },
-      { label: 'Schedule Master', soon: 'Schedule Master' },
-      { label: 'Calendar', soon: 'Calendar' },
-    ],
-  },
+  { key: 'dashboard', label: 'Dashboard', ico: '▦', route: 'dashboard' },
 ]
 
-function ownerOf(routeName) {
-  if (routeName.startsWith('customer')) return 'customer'
-  if (routeName === 'dashboard') return 'dashboard'
+// Which top-level module the current screen belongs to, so the sidebar can
+// show that group open and mark it. A coming-soon screen carries the name of
+// the module it came from.
+function ownerOf(route) {
+  const { name, params } = route
+  if (name === 'soon' && params?.parent) return MENU.find((m) => m.label === params.parent)?.key || null
+  if (name.startsWith('customer')) return 'customer'
+  if (name.startsWith('set-')) return 'settings'
+  if (name === 'dashboard') return 'dashboard'
   return null
 }
 
@@ -138,30 +145,70 @@ for (const it of MENU) {
 }
 
 export default function Layout({ session, route, navigate, onLogout, onSwitchBranch, children }) {
-  const [open, setOpen] = useState(false) // mobile drawer
-  const owner = ownerOf(route.name)
-  const [expanded, setExpanded] = useState(() => new Set(owner ? [owner] : ['customer']))
+  const [open, setOpen] = useState(false) // the drawer, on a narrow screen
+  // Collapsed to an icon rail on a wide screen. Remembered between visits.
+  const [rail, setRail] = useState(() => {
+    try {
+      return localStorage.getItem('pifi.rail') === '1'
+    } catch {
+      return false
+    }
+  })
+  const owner = ownerOf(route)
+  // One group at a time, the way the old accordion menu behaved.
+  const [openGroup, setOpenGroup] = useState(owner || 'customer')
   const { user, branch, branches } = session
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('pifi.rail', rail ? '1' : '0')
+    } catch {
+      /* private window — the rail just will not be remembered */
+    }
+  }, [rail])
+
+  const narrow = () => window.matchMedia('(max-width: 820px)').matches
+  // The same button slides the drawer on a phone and collapses the rail on a desktop.
+  const toggleSidebar = () => (narrow() ? setOpen((o) => !o) : setRail((r) => !r))
 
   const title = route.name === 'soon' ? route.params.title : ALL_TITLES[route.name] || 'PiFi'
 
+  // Moving to a screen in another module opens that module's group.
+  useEffect(() => {
+    if (owner) setOpenGroup(owner)
+  }, [owner])
+
+  // Escape closes the drawer, and the page behind it does not scroll.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
   function toggle(key) {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      next.has(key) ? next.delete(key) : next.add(key)
-      return next
-    })
+    if (rail) {
+      setRail(false)
+      setOpenGroup(key)
+      return
+    }
+    setOpenGroup((k) => (k === key ? null : key))
   }
 
-  function go(leaf) {
+  function go(leaf, parent) {
     setOpen(false)
     if (leaf.route) navigate(leaf.route)
-    else navigate('soon', { title: leaf.soon })
+    else navigate('soon', { title: leaf.soon, parent: parent?.label, ico: parent?.ico })
   }
 
   return (
     <div className="app">
-      <aside className={`sidebar ${open ? 'open' : ''}`}>
+      {open && <div className="sidebar-backdrop" onClick={() => setOpen(false)} aria-hidden="true" />}
+      <aside className={`sidebar${open ? ' open' : ''}${rail ? ' rail' : ''}`}>
         <div className="brand">
           <span className="logo">Pi</span>
           <span>PiFi Finance</span>
@@ -174,17 +221,23 @@ export default function Layout({ session, route, navigate, onLogout, onSwitchBra
                   key={it.key}
                   className={route.name === it.route ? 'active' : ''}
                   onClick={() => go(it)}
+                  title={it.label}
                 >
                   <span className="ico">{it.ico}</span>
                   <span>{it.label}</span>
                 </button>
               )
             }
-            const isOpen = expanded.has(it.key)
+            const isOpen = openGroup === it.key
             const isOwner = owner === it.key
             return (
               <div key={it.key}>
-                <button className={`parent ${isOwner ? 'owner' : ''}`} onClick={() => toggle(it.key)}>
+                <button
+                  className={`parent ${isOwner ? 'owner' : ''}`}
+                  onClick={() => toggle(it.key)}
+                  aria-expanded={isOpen}
+                  title={it.label}
+                >
                   <span className="ico">{it.ico}</span>
                   <span style={{ flex: 1 }}>{it.label}</span>
                   <span className={`chev ${isOpen ? 'open' : ''}`}>›</span>
@@ -195,7 +248,7 @@ export default function Layout({ session, route, navigate, onLogout, onSwitchBra
                       <button
                         key={c.label}
                         className={`child ${c.route && route.name === c.route ? 'active' : ''}`}
-                        onClick={() => go(c)}
+                        onClick={() => go(c, it)}
                       >
                         {c.label}
                       </button>
@@ -211,7 +264,12 @@ export default function Layout({ session, route, navigate, onLogout, onSwitchBra
       <div className="main">
         <header className="topbar">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button className="btn ghost hamburger" onClick={() => setOpen((o) => !o)}>
+            <button
+              className="btn ghost hamburger"
+              onClick={toggleSidebar}
+              title={rail ? 'Expand the menu' : 'Collapse the menu'}
+              aria-label={rail ? 'Expand the menu' : 'Collapse the menu'}
+            >
               ☰
             </button>
             <span className="page-title">{title}</span>

@@ -1,0 +1,1421 @@
+{
+  "schedules": [
+    {
+      "code": "A10",
+      "name": "Interest Earned"
+    },
+    {
+      "code": "A20",
+      "name": "Miscellaneous Income"
+    },
+    {
+      "code": "A30",
+      "name": "Interest on investments"
+    },
+    {
+      "code": "A90",
+      "name": "Other Income"
+    },
+    {
+      "code": "B10",
+      "name": "Interest Paid"
+    },
+    {
+      "code": "B20",
+      "name": "Establishment"
+    },
+    {
+      "code": "B30",
+      "name": "Administrative Expenses"
+    },
+    {
+      "code": "B32",
+      "name": "Maintenance Expenses"
+    },
+    {
+      "code": "B33",
+      "name": "Travel Expenses"
+    },
+    {
+      "code": "B34",
+      "name": "Promotional Expenses"
+    },
+    {
+      "code": "B35",
+      "name": "Taxes"
+    },
+    {
+      "code": "B37",
+      "name": "Auditor Payments"
+    },
+    {
+      "code": "B38",
+      "name": "Director Expenses"
+    },
+    {
+      "code": "B90",
+      "name": "Other Expenditure"
+    },
+    {
+      "code": "B99",
+      "name": "Notional Interest"
+    },
+    {
+      "code": "C",
+      "name": "Liability"
+    },
+    {
+      "code": "C10",
+      "name": "Capital"
+    },
+    {
+      "code": "C20",
+      "name": "Reserves and Surplus"
+    },
+    {
+      "code": "C25",
+      "name": "Profit & Loss A/c"
+    },
+    {
+      "code": "C26",
+      "name": "Secured Loans (Liability)"
+    },
+    {
+      "code": "C27",
+      "name": "Current Liabilities"
+    },
+    {
+      "code": "C30",
+      "name": "Unsecured Loans"
+    },
+    {
+      "code": "C40",
+      "name": "Interest Payable on Deposits"
+    },
+    {
+      "code": "C50",
+      "name": "Other Payables"
+    },
+    {
+      "code": "C60",
+      "name": "TDS"
+    },
+    {
+      "code": "C65",
+      "name": "Unpaid Dividend"
+    },
+    {
+      "code": "C69",
+      "name": "Provisions"
+    },
+    {
+      "code": "C70",
+      "name": "Other Liabilities & Provisions"
+    },
+    {
+      "code": "C80",
+      "name": "P & L Account"
+    },
+    {
+      "code": "D",
+      "name": "Asset"
+    },
+    {
+      "code": "D10",
+      "name": "Deposits and Investments"
+    },
+    {
+      "code": "D20",
+      "name": "Cash & Bank Balance"
+    },
+    {
+      "code": "D25",
+      "name": "Current Assets"
+    },
+    {
+      "code": "D30",
+      "name": "Fixed Assets"
+    },
+    {
+      "code": "D40",
+      "name": "Advances"
+    },
+    {
+      "code": "D50",
+      "name": "Loans & Advances"
+    },
+    {
+      "code": "D55",
+      "name": "Interest Receivable"
+    },
+    {
+      "code": "D56",
+      "name": "Misc. Expenses (Asset)"
+    },
+    {
+      "code": "D60",
+      "name": "Other Assets"
+    }
+  ],
+  "glAccounts": [
+    {
+      "code": "10201",
+      "name": "Share Application Money"
+    },
+    {
+      "code": "10202",
+      "name": "Share capital"
+    },
+    {
+      "code": "10206",
+      "name": "Reserves & Surplus"
+    },
+    {
+      "code": "10207",
+      "name": "Secured Loans"
+    },
+    {
+      "code": "10208",
+      "name": "Profit & Loss Appropriation"
+    },
+    {
+      "code": "10209",
+      "name": "Profit & Loss"
+    },
+    {
+      "code": "10210",
+      "name": "Fixed Deposit"
+    },
+    {
+      "code": "10211",
+      "name": "Cumulative Deposit"
+    },
+    {
+      "code": "10213",
+      "name": "Recurring Deposit"
+    },
+    {
+      "code": "10214",
+      "name": "Savings Deposit"
+    },
+    {
+      "code": "10215",
+      "name": "Special Savings Deposit"
+    },
+    {
+      "code": "10216",
+      "name": "Daily Savings Deposit"
+    },
+    {
+      "code": "10219",
+      "name": "Group Insurance"
+    },
+    {
+      "code": "10220",
+      "name": "Interest Payable on FD"
+    },
+    {
+      "code": "10221",
+      "name": "Interest Payable on CD"
+    },
+    {
+      "code": "10223",
+      "name": "Interest Payable on RD"
+    },
+    {
+      "code": "10224",
+      "name": "Interest Payable on SD"
+    },
+    {
+      "code": "10225",
+      "name": "Interest Payable on SSD"
+    },
+    {
+      "code": "10226",
+      "name": "Interest Payable on DSD"
+    },
+    {
+      "code": "10235",
+      "name": "Suspense (Sundry Cr.) A/c"
+    },
+    {
+      "code": "10240",
+      "name": "Cost Of Books & Forms"
+    },
+    {
+      "code": "10260",
+      "name": "Deffered Tax Asset"
+    },
+    {
+      "code": "10265",
+      "name": "Provision for Depreciation"
+    },
+    {
+      "code": "10268",
+      "name": "Provision for Income Tax"
+    },
+    {
+      "code": "10270",
+      "name": "Tax Deducted at Source"
+    },
+    {
+      "code": "10301",
+      "name": "Loan from Bank"
+    },
+    {
+      "code": "10823",
+      "name": "Salary Payable"
+    },
+    {
+      "code": "10824",
+      "name": "ELECTRICITY CHARGES PAYABLE"
+    },
+    {
+      "code": "11004",
+      "name": "TDS Payable"
+    },
+    {
+      "code": "11012",
+      "name": "Travelling Expense Payable"
+    },
+    {
+      "code": "11013",
+      "name": "PROFESSIONAL FEES PAYABLE"
+    },
+    {
+      "code": "11015",
+      "name": "CAPITAL DIRECTORS"
+    },
+    {
+      "code": "11016",
+      "name": "Loan From Federal bank 55323"
+    },
+    {
+      "code": "11017",
+      "name": "Loan From Federal bank 29126"
+    },
+    {
+      "code": "11018",
+      "name": "AO Fund Account"
+    },
+    {
+      "code": "20004",
+      "name": "Furniture & Fittings"
+    },
+    {
+      "code": "20005",
+      "name": "Cash Counting Machine"
+    },
+    {
+      "code": "20006",
+      "name": "Computer"
+    },
+    {
+      "code": "20007",
+      "name": "Vehicle"
+    },
+    {
+      "code": "20008",
+      "name": "UPS"
+    },
+    {
+      "code": "20014",
+      "name": "DUE TO"
+    },
+    {
+      "code": "20015",
+      "name": "Central Office"
+    },
+    {
+      "code": "20020",
+      "name": "Interest Receivable"
+    },
+    {
+      "code": "20036",
+      "name": "Federal Bank"
+    },
+    {
+      "code": "20040",
+      "name": "Electricity Deposit"
+    },
+    {
+      "code": "20041",
+      "name": "Telephone Deposit"
+    },
+    {
+      "code": "20042",
+      "name": "Pisquare Software Solutions"
+    },
+    {
+      "code": "20045",
+      "name": "Suspense (Sundry Dr.) A/c"
+    },
+    {
+      "code": "20046",
+      "name": "BTGL"
+    },
+    {
+      "code": "20047",
+      "name": "BMGL"
+    },
+    {
+      "code": "20048",
+      "name": "BHGL"
+    },
+    {
+      "code": "20049",
+      "name": "BSPGL"
+    },
+    {
+      "code": "20050",
+      "name": "Loan against Property"
+    },
+    {
+      "code": "20051",
+      "name": "Loan against Deposit"
+    },
+    {
+      "code": "20052",
+      "name": "BLGL"
+    },
+    {
+      "code": "20053",
+      "name": "Staff Personal Loan"
+    },
+    {
+      "code": "20054",
+      "name": "Staff Vehicle Loan"
+    },
+    {
+      "code": "20055",
+      "name": "Interest Receivable on BTGL"
+    },
+    {
+      "code": "20056",
+      "name": "Interest Receivable on BMGL"
+    },
+    {
+      "code": "20060",
+      "name": "Interest Receivable on Property Loan"
+    },
+    {
+      "code": "20061",
+      "name": "Interest Receivable on LAD"
+    },
+    {
+      "code": "20062",
+      "name": "Interest Receivable on BLGL"
+    },
+    {
+      "code": "20063",
+      "name": "Interest Receivable on Personal Loan"
+    },
+    {
+      "code": "20064",
+      "name": "Interest Receivable on Staff Loan"
+    },
+    {
+      "code": "20065",
+      "name": "Interest Receivable on BHGL"
+    },
+    {
+      "code": "20066",
+      "name": "Interest Receivable on BSPGL"
+    },
+    {
+      "code": "20081",
+      "name": "Penal Interest Receivable on LAD"
+    },
+    {
+      "code": "20082",
+      "name": "Penal Interest Receivable on JML"
+    },
+    {
+      "code": "20083",
+      "name": "INTEREST ACCURED ON BANK DEPOSIT"
+    },
+    {
+      "code": "20104",
+      "name": "Administrative Office"
+    },
+    {
+      "code": "20110",
+      "name": "Preliminary Expenses"
+    },
+    {
+      "code": "20121",
+      "name": "TRFL"
+    },
+    {
+      "code": "20122",
+      "name": "TRSL"
+    },
+    {
+      "code": "20123",
+      "name": "TRTL"
+    },
+    {
+      "code": "20124",
+      "name": "TRHL"
+    },
+    {
+      "code": "20125",
+      "name": "TRXL"
+    },
+    {
+      "code": "20126",
+      "name": "TREL"
+    },
+    {
+      "code": "20131",
+      "name": "Interest Receivable on TRFL"
+    },
+    {
+      "code": "20132",
+      "name": "Interest Receivable on TRSL"
+    },
+    {
+      "code": "20133",
+      "name": "Interest Receivable on TRTL"
+    },
+    {
+      "code": "20134",
+      "name": "Interest Receivable on TRHL"
+    },
+    {
+      "code": "20135",
+      "name": "Interest Receivable on TRXL"
+    },
+    {
+      "code": "20136",
+      "name": "Interest Receivable on TREL"
+    },
+    {
+      "code": "29000",
+      "name": "Cash on Hand"
+    },
+    {
+      "code": "29001",
+      "name": "BUILDING DEPOSIT"
+    },
+    {
+      "code": "29002",
+      "name": "ACCUMULATED DEPRICIATION"
+    },
+    {
+      "code": "29003",
+      "name": "CCTV"
+    },
+    {
+      "code": "29004",
+      "name": "WEIGHT MACHINE"
+    },
+    {
+      "code": "29005",
+      "name": "AC"
+    },
+    {
+      "code": "29006",
+      "name": "FIRM REGISTRATION"
+    },
+    {
+      "code": "29007",
+      "name": "NAME BOARD"
+    },
+    {
+      "code": "29008",
+      "name": "GRILL GATE"
+    },
+    {
+      "code": "29009",
+      "name": "Fixed Deposit With Bank"
+    },
+    {
+      "code": "30401",
+      "name": "Interest Received"
+    },
+    {
+      "code": "30402",
+      "name": "Interest on LAD"
+    },
+    {
+      "code": "30403",
+      "name": "Interest on BLGL"
+    },
+    {
+      "code": "30404",
+      "name": "Interest on Personal Loan"
+    },
+    {
+      "code": "30405",
+      "name": "Interest Received On Co Lending"
+    },
+    {
+      "code": "30406",
+      "name": "RD Penal Charges"
+    },
+    {
+      "code": "30407",
+      "name": "Auction Loss"
+    },
+    {
+      "code": "30408",
+      "name": "DUE BY"
+    },
+    {
+      "code": "30410",
+      "name": "Interest on Bank Deposit"
+    },
+    {
+      "code": "30411",
+      "name": "Interest on BTGL"
+    },
+    {
+      "code": "30412",
+      "name": "Interest on BMGL"
+    },
+    {
+      "code": "30413",
+      "name": "Interest on BHGL"
+    },
+    {
+      "code": "30414",
+      "name": "Interest on BSPGL"
+    },
+    {
+      "code": "30420",
+      "name": "Insurance Fees (Cr)"
+    },
+    {
+      "code": "30421",
+      "name": "Processing fee"
+    },
+    {
+      "code": "30423",
+      "name": "Entrance Fees"
+    },
+    {
+      "code": "30425",
+      "name": "Miscellaneous Receipt"
+    },
+    {
+      "code": "30426",
+      "name": "DEFERRED TAX INCOME"
+    },
+    {
+      "code": "30427",
+      "name": "JML Penal Charge"
+    },
+    {
+      "code": "30428",
+      "name": "Service Tax (Cr.)"
+    },
+    {
+      "code": "30429",
+      "name": "Penal Charges on LAD"
+    },
+    {
+      "code": "30430",
+      "name": "Notice Charges"
+    },
+    {
+      "code": "30431",
+      "name": "DEFAULT INTEREST - ML"
+    },
+    {
+      "code": "30451",
+      "name": "Interest on TRFL"
+    },
+    {
+      "code": "30452",
+      "name": "Interest on TRSL"
+    },
+    {
+      "code": "30453",
+      "name": "Interest on TRTL"
+    },
+    {
+      "code": "30454",
+      "name": "Interest on TRHL"
+    },
+    {
+      "code": "30455",
+      "name": "Interest on TRXL"
+    },
+    {
+      "code": "30456",
+      "name": "Interest on TREL"
+    },
+    {
+      "code": "30501",
+      "name": "Locker Rent"
+    },
+    {
+      "code": "30700",
+      "name": "Folio & Incidental Charges"
+    },
+    {
+      "code": "30702",
+      "name": "Share Application Processing charges"
+    },
+    {
+      "code": "31218",
+      "name": "Insurance"
+    },
+    {
+      "code": "40601",
+      "name": "Interest Paid on FD"
+    },
+    {
+      "code": "40602",
+      "name": "Interest Paid on CD"
+    },
+    {
+      "code": "40603",
+      "name": "Interest Paid on SSD"
+    },
+    {
+      "code": "40604",
+      "name": "Interest Paid on RD"
+    },
+    {
+      "code": "40605",
+      "name": "Interest Paid on SD"
+    },
+    {
+      "code": "40606",
+      "name": "Professional Tax"
+    },
+    {
+      "code": "40607",
+      "name": "Interest paid on Bank Loan"
+    },
+    {
+      "code": "40608",
+      "name": "Staff Welfare Expeneses"
+    },
+    {
+      "code": "40609",
+      "name": "Interest Paid on DSD"
+    },
+    {
+      "code": "40610",
+      "name": "Interest Paid to Others"
+    },
+    {
+      "code": "40611",
+      "name": "Interest Paid to Directors"
+    },
+    {
+      "code": "40615",
+      "name": "Salaries & Wages"
+    },
+    {
+      "code": "40616",
+      "name": "Interest Paid on Bank Loan"
+    },
+    {
+      "code": "40619",
+      "name": "Customer Welfare Expenses"
+    },
+    {
+      "code": "40625",
+      "name": "Travelling Expenses"
+    },
+    {
+      "code": "40626",
+      "name": "Generator Expenses"
+    },
+    {
+      "code": "40627",
+      "name": "Fuel Charges"
+    },
+    {
+      "code": "40628",
+      "name": "Bank Charges"
+    },
+    {
+      "code": "40629",
+      "name": "Postage Paid"
+    },
+    {
+      "code": "40630",
+      "name": "Advertisement Expense"
+    },
+    {
+      "code": "40631",
+      "name": "Registration & Filing Fees"
+    },
+    {
+      "code": "40632",
+      "name": "Stationery Expenses"
+    },
+    {
+      "code": "40633",
+      "name": "Insurance (Dr.)"
+    },
+    {
+      "code": "40634",
+      "name": "ROC Filing Charges"
+    },
+    {
+      "code": "40635",
+      "name": "Telephone Charges"
+    },
+    {
+      "code": "40636",
+      "name": "Electricity Charges"
+    },
+    {
+      "code": "40637",
+      "name": "Books & Periodicals"
+    },
+    {
+      "code": "40638",
+      "name": "Bank processing charges"
+    },
+    {
+      "code": "40642",
+      "name": "Office Maintenance Expenses"
+    },
+    {
+      "code": "40643",
+      "name": "Directors Sitting Fees"
+    },
+    {
+      "code": "40644",
+      "name": "Directors Remuneration"
+    },
+    {
+      "code": "40645",
+      "name": "Directors Travelling Exp"
+    },
+    {
+      "code": "40646",
+      "name": "Journals"
+    },
+    {
+      "code": "40647",
+      "name": "Overtime Payment"
+    },
+    {
+      "code": "40648",
+      "name": "Rates & Taxes"
+    },
+    {
+      "code": "40650",
+      "name": "Miscellaneous Expenses"
+    },
+    {
+      "code": "40651",
+      "name": "Property Tax"
+    },
+    {
+      "code": "40653",
+      "name": "Computer Maintenance"
+    },
+    {
+      "code": "40655",
+      "name": "Auditors Fees"
+    },
+    {
+      "code": "40753",
+      "name": "Local Conveyance"
+    },
+    {
+      "code": "40754",
+      "name": "Meeting Expenses"
+    },
+    {
+      "code": "40801",
+      "name": "Pooja Expenses"
+    },
+    {
+      "code": "40802",
+      "name": "Repairs & Renewals"
+    },
+    {
+      "code": "41007",
+      "name": "Establishment"
+    },
+    {
+      "code": "41008",
+      "name": "Incentives"
+    },
+    {
+      "code": "41010",
+      "name": "Depreciation"
+    },
+    {
+      "code": "41011",
+      "name": "Taxi Hire"
+    },
+    {
+      "code": "41012",
+      "name": "Xerox"
+    },
+    {
+      "code": "41014",
+      "name": "Varthagar Sangam"
+    },
+    {
+      "code": "41015",
+      "name": "Building Rent"
+    },
+    {
+      "code": "41016",
+      "name": "CCTV Maintenance"
+    },
+    {
+      "code": "41017",
+      "name": "Weight Machine Expenses"
+    },
+    {
+      "code": "41018",
+      "name": "Inaguration Expenses"
+    },
+    {
+      "code": "41019",
+      "name": "Ups Maintanence Expenses"
+    },
+    {
+      "code": "41020",
+      "name": "Water Dispenser"
+    },
+    {
+      "code": "41021",
+      "name": "Drinking Cane Water Expenses"
+    },
+    {
+      "code": "41022",
+      "name": "Auditor FEE"
+    },
+    {
+      "code": "41023",
+      "name": "PRELIMINARY EXPENSES W OFF"
+    },
+    {
+      "code": "41024",
+      "name": "APPRASING FEES"
+    },
+    {
+      "code": "41025",
+      "name": "INTEREST WAIVER"
+    },
+    {
+      "code": "41026",
+      "name": "Int on federal bank loan 55323"
+    },
+    {
+      "code": "41027",
+      "name": "Int on federal bank loan 29126"
+    }
+  ],
+  "schemes": [
+    {
+      "code": "10010",
+      "name": "Equity Share Capital",
+      "category": "SC",
+      "glCode": "10202",
+      "status": "A"
+    },
+    {
+      "code": "20010",
+      "name": "Savings Deposit",
+      "category": "SD",
+      "glCode": "10214",
+      "status": "A"
+    },
+    {
+      "code": "30010",
+      "name": "Fixed Deposit",
+      "category": "FD",
+      "glCode": "10210",
+      "status": "A"
+    },
+    {
+      "code": "30020",
+      "name": "Cumulative Deposit",
+      "category": "FD",
+      "glCode": "10211",
+      "status": "A"
+    },
+    {
+      "code": "40010",
+      "name": "Recurring Deposit",
+      "category": "RD",
+      "glCode": "10213",
+      "status": "A"
+    },
+    {
+      "code": "60010",
+      "name": "BLGL",
+      "category": "JL",
+      "glCode": "20052",
+      "status": "A"
+    },
+    {
+      "code": "60011",
+      "name": "BTGL",
+      "category": "JL",
+      "glCode": "20046",
+      "status": "A"
+    },
+    {
+      "code": "60012",
+      "name": "BMGL",
+      "category": "JL",
+      "glCode": "20047",
+      "status": "A"
+    },
+    {
+      "code": "60013",
+      "name": "BHGL",
+      "category": "JL",
+      "glCode": "20048",
+      "status": "A"
+    },
+    {
+      "code": "60014",
+      "name": "BSPGL",
+      "category": "JL",
+      "glCode": "20048",
+      "status": "A"
+    },
+    {
+      "code": "60015",
+      "name": "TRFL",
+      "category": "JL",
+      "glCode": "20121",
+      "status": "A"
+    },
+    {
+      "code": "60016",
+      "name": "TRSL",
+      "category": "JL",
+      "glCode": "20122",
+      "status": "A"
+    },
+    {
+      "code": "60017",
+      "name": "TRTL",
+      "category": "JL",
+      "glCode": "20123",
+      "status": "A"
+    },
+    {
+      "code": "60018",
+      "name": "TRHL",
+      "category": "JL",
+      "glCode": "20124",
+      "status": "A"
+    },
+    {
+      "code": "60019",
+      "name": "TRXL",
+      "category": "JL",
+      "glCode": "20125",
+      "status": "A"
+    }
+  ],
+  "interestSlabs": [
+    {
+      "schemeCode": "60020",
+      "schemeName": "TREL",
+      "period": "0-90 Days",
+      "effectDate": "01/03/2026",
+      "rate": "21.00",
+      "penalRate": "0.00",
+      "srCtznRate": "0.00",
+      "srCtznPenalRate": "0.00"
+    },
+    {
+      "schemeCode": "60020",
+      "schemeName": "TREL",
+      "period": "91-180 Days",
+      "effectDate": "01/03/2026",
+      "rate": "25.00",
+      "penalRate": "0.00",
+      "srCtznRate": "0.00",
+      "srCtznPenalRate": "0.00"
+    },
+    {
+      "schemeCode": "60020",
+      "schemeName": "TREL",
+      "period": "181-999 Days",
+      "effectDate": "01/03/2026",
+      "rate": "30.00",
+      "penalRate": "0.00",
+      "srCtznRate": "0.00",
+      "srCtznPenalRate": "0.00"
+    },
+    {
+      "schemeCode": "60021",
+      "schemeName": "TRQL",
+      "period": "0-999 Days",
+      "effectDate": "01/01/2026",
+      "rate": "33.00",
+      "penalRate": "0.00",
+      "srCtznRate": "0.00",
+      "srCtznPenalRate": "0.00"
+    },
+    {
+      "schemeCode": "60015",
+      "schemeName": "TRFL",
+      "period": "0-30 Days",
+      "effectDate": "02/01/2025",
+      "rate": "12.00",
+      "penalRate": "0.00",
+      "srCtznRate": "0.00",
+      "srCtznPenalRate": "0.00"
+    },
+    {
+      "schemeCode": "60015",
+      "schemeName": "TRFL",
+      "period": "31-90 Days",
+      "effectDate": "02/01/2025",
+      "rate": "18.00",
+      "penalRate": "0.00",
+      "srCtznRate": "0.00",
+      "srCtznPenalRate": "0.00"
+    },
+    {
+      "schemeCode": "60015",
+      "schemeName": "TRFL",
+      "period": "91-180 Days",
+      "effectDate": "02/01/2025",
+      "rate": "24.00",
+      "penalRate": "0.00",
+      "srCtznRate": "0.00",
+      "srCtznPenalRate": "0.00"
+    },
+    {
+      "schemeCode": "60015",
+      "schemeName": "TRFL",
+      "period": "181-270 Days",
+      "effectDate": "02/01/2025",
+      "rate": "27.00",
+      "penalRate": "0.00",
+      "srCtznRate": "0.00",
+      "srCtznPenalRate": "0.00"
+    },
+    {
+      "schemeCode": "60015",
+      "schemeName": "TRFL",
+      "period": "271-999 Days",
+      "effectDate": "02/01/2025",
+      "rate": "30.00",
+      "penalRate": "0.00",
+      "srCtznRate": "0.00",
+      "srCtznPenalRate": "0.00"
+    },
+    {
+      "schemeCode": "60016",
+      "schemeName": "TRSL",
+      "period": "0-90 Days",
+      "effectDate": "02/01/2025",
+      "rate": "15.00",
+      "penalRate": "0.00",
+      "srCtznRate": "0.00",
+      "srCtznPenalRate": "0.00"
+    }
+  ],
+  "depositPeriods": [
+    {
+      "schemeName": "Fixed Deposit",
+      "schemeCode": "30010",
+      "period": "12 Months",
+      "periodCode": "12M",
+      "status": "A"
+    },
+    {
+      "schemeName": "Fixed Deposit",
+      "schemeCode": "30010",
+      "period": "24 Months",
+      "periodCode": "24M",
+      "status": "A"
+    },
+    {
+      "schemeName": "Fixed Deposit",
+      "schemeCode": "30010",
+      "period": "36 Months",
+      "periodCode": "36M",
+      "status": "A"
+    },
+    {
+      "schemeName": "Fixed Deposit",
+      "schemeCode": "30010",
+      "period": "48 Months",
+      "periodCode": "48M",
+      "status": "A"
+    },
+    {
+      "schemeName": "Fixed Deposit",
+      "schemeCode": "30010",
+      "period": "60 Months",
+      "periodCode": "60M",
+      "status": "A"
+    },
+    {
+      "schemeName": "",
+      "schemeCode": "30011",
+      "period": "60 Months",
+      "periodCode": "60M",
+      "status": "A"
+    },
+    {
+      "schemeName": "",
+      "schemeCode": "30012",
+      "period": "12 Months",
+      "periodCode": "12M",
+      "status": "A"
+    },
+    {
+      "schemeName": "Cumulative Deposit",
+      "schemeCode": "30020",
+      "period": "12 Months",
+      "periodCode": "12M",
+      "status": "A"
+    },
+    {
+      "schemeName": "Cumulative Deposit",
+      "schemeCode": "30020",
+      "period": "24 Months",
+      "periodCode": "24M",
+      "status": "A"
+    },
+    {
+      "schemeName": "Cumulative Deposit",
+      "schemeCode": "30020",
+      "period": "36 Months",
+      "periodCode": "36M",
+      "status": "A"
+    },
+    {
+      "schemeName": "Cumulative Deposit",
+      "schemeCode": "30020",
+      "period": "48 Months",
+      "periodCode": "48M",
+      "status": "A"
+    },
+    {
+      "schemeName": "Cumulative Deposit",
+      "schemeCode": "30020",
+      "period": "60 Months",
+      "periodCode": "60M",
+      "status": "A"
+    },
+    {
+      "schemeName": "Cumulative Deposit",
+      "schemeCode": "30020",
+      "period": "6 Months",
+      "periodCode": "6M",
+      "status": "A"
+    },
+    {
+      "schemeName": "Recurring Deposit",
+      "schemeCode": "40010",
+      "period": "12 Months",
+      "periodCode": "12",
+      "status": "A"
+    },
+    {
+      "schemeName": "Recurring Deposit",
+      "schemeCode": "40010",
+      "period": "24 Months",
+      "periodCode": "24",
+      "status": "A"
+    },
+    {
+      "schemeName": "Recurring Deposit",
+      "schemeCode": "40010",
+      "period": "36 Months",
+      "periodCode": "36",
+      "status": "A"
+    },
+    {
+      "schemeName": "Recurring Deposit",
+      "schemeCode": "40010",
+      "period": "48 Months",
+      "periodCode": "48",
+      "status": "A"
+    },
+    {
+      "schemeName": "Recurring Deposit",
+      "schemeCode": "40010",
+      "period": "60 Months",
+      "periodCode": "60",
+      "status": "A"
+    }
+  ],
+  "reportSettings": [
+    {
+      "groupName": "1.Fixed Deposit",
+      "glCode": "10210",
+      "glName": "Fixed Deposit"
+    },
+    {
+      "groupName": "1.Fixed Deposit",
+      "glCode": "10211",
+      "glName": "Cumulative Deposit"
+    },
+    {
+      "groupName": "1.Fixed Deposit",
+      "glCode": "10212",
+      "glName": ""
+    },
+    {
+      "groupName": "2.Short Term Deposit",
+      "glCode": "10214",
+      "glName": "Savings Deposit"
+    },
+    {
+      "groupName": "2.Short Term Deposit",
+      "glCode": "10213",
+      "glName": "Recurring Deposit"
+    },
+    {
+      "groupName": "2.Short Term Deposit",
+      "glCode": "10215",
+      "glName": "Special Savings Deposit"
+    },
+    {
+      "groupName": "3.Loans",
+      "glCode": "20051",
+      "glName": "Loan against Deposit"
+    },
+    {
+      "groupName": "3.Loans",
+      "glCode": "20052",
+      "glName": "BLGL"
+    },
+    {
+      "groupName": "4.Share",
+      "glCode": "10201",
+      "glName": "Share Application Money"
+    },
+    {
+      "groupName": "4.Share",
+      "glCode": "10202",
+      "glName": "Share capital"
+    },
+    {
+      "groupName": "5.Cash & Bank Balance",
+      "glCode": "29000",
+      "glName": "Cash on Hand"
+    },
+    {
+      "groupName": "5.Cash & Bank Balance",
+      "glCode": "20030",
+      "glName": ""
+    },
+    {
+      "groupName": "5.Cash & Bank Balance",
+      "glCode": "20031",
+      "glName": ""
+    },
+    {
+      "groupName": "5.Cash & Bank Balance",
+      "glCode": "20032",
+      "glName": ""
+    },
+    {
+      "groupName": "6.Administrative Office",
+      "glCode": "20104",
+      "glName": "Administrative Office"
+    }
+  ],
+  "reportNames": [
+    {
+      "code": "101",
+      "name": "Deposit vs Loan Details"
+    },
+    {
+      "code": "102",
+      "name": "Funds Position"
+    }
+  ],
+  "jewelTypes": [
+    "Ankle ware",
+    "Baby Bangle",
+    "Bangle",
+    "Belt",
+    "Bracelet",
+    "Broad Bangle",
+    "Chain",
+    "Drops",
+    "Drops and Stud",
+    "Ear Ring",
+    "Finger Ring",
+    "Hand Set",
+    "Hook",
+    "Maanga Maalai",
+    "Maattal",
+    "Necklace",
+    "Kaasu Maalai",
+    "Locket",
+    "Stone Necklace",
+    "Vangi",
+    "Wrist Watch",
+    "Ottiyanam",
+    "Nose Ring",
+    "Haaram",
+    "Stud (Thodu)",
+    "Baby Ring",
+    "Baby Bracelet",
+    "Baby Chain",
+    "Baby Ear Ring",
+    "Baby Waist Chain",
+    "Stone Ring",
+    "Dollar Chain",
+    "Stone Bangle",
+    "Muthu Maalai"
+  ],
+  "idProofs": [
+    "Voter ID",
+    "Licence NO",
+    "Aadhaar Card"
+  ],
+  "banks": [
+    "SUJA BAJAJ",
+    "SUJA FEDERAL",
+    "CENTRAL BANK SUJA",
+    "BAJAJ-PRASHANTH",
+    "SUJA FED BANK",
+    "KMBF-BALA",
+    "SUJA FED VADASERY",
+    "LULU FINANCE SUJI",
+    "JANA SUJI",
+    "LATHA FED VADSERY",
+    "SUJI ESAF",
+    "JANA -SATHEESH",
+    "ESAF SATHEESH",
+    "BAJAJ--RAMAN",
+    "FED--RAMAN",
+    "HDB SUJI",
+    "JANA SUBASH",
+    "KCN LIMITED-SUJI",
+    "PRSANTH KCN LIMITED",
+    "SUBASH LULU FINSERV",
+    "LULU PRASANTH",
+    "FED RAMAN PUTHUR SATHEESH"
+  ],
+  "bankAccounts": [
+    {
+      "glCode": "10215",
+      "glName": "Special Savings Deposit"
+    },
+    {
+      "glCode": "20036",
+      "glName": "Federal Bank"
+    }
+  ],
+  "goldRates": [
+    {
+      "effectDate": "01/01/2024",
+      "marketRate": "5800.00",
+      "createdBy": ""
+    }
+  ],
+  "permissionModules": []
+}

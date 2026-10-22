@@ -7,6 +7,40 @@ import CustomerList from './components/CustomerList.jsx'
 import CustomerForm from './components/CustomerForm.jsx'
 import CustomerEnquiry from './components/CustomerEnquiry.jsx'
 import CustomerReports from './components/CustomerReports.jsx'
+import ComingSoon from './components/ComingSoon.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
+import {
+  ScheduleMaster, GlMaster, SchemeMaster, InterestSlabMaster, JewelDescription,
+  IdProofMaster, BankMaster, MarketRate, DepositPeriodMaster, ReportSettings,
+} from './components/settings/masters.jsx'
+import {
+  BranchMaster, GeneralSettings, OpeningBalances, CalendarSettings,
+  UserRegistration, ChangePassword, PermissionSettings, InterestProvision,
+} from './components/settings/screens.jsx'
+import BankAccounts from './components/settings/BankAccounts.jsx'
+
+// The Settings menu, keyed by route. Order lives in Layout's menu.
+const SETTINGS_SCREENS = {
+  'set-branch': BranchMaster,
+  'set-schedule': ScheduleMaster,
+  'set-gl': GlMaster,
+  'set-opening': OpeningBalances,
+  'set-scheme': SchemeMaster,
+  'set-slab': InterestSlabMaster,
+  'set-general': GeneralSettings,
+  'set-bank-accounts': BankAccounts,
+  'set-jewel': JewelDescription,
+  'set-gold-rate': MarketRate,
+  'set-deposit-period': DepositPeriodMaster,
+  'set-id-proof': IdProofMaster,
+  'set-bank': BankMaster,
+  'set-calendar': CalendarSettings,
+  'set-report': ReportSettings,
+  'set-users': UserRegistration,
+  'set-password': ChangePassword,
+  'set-permissions': PermissionSettings,
+  'set-provision': InterestProvision,
+}
 
 export default function App() {
   const [session, setSession] = useState(null) // { user, branch, branches }
@@ -46,38 +80,34 @@ export default function App() {
   if (loading) return <div className="login-wrap" />
   if (!session) return <Login onDone={loadSession} />
 
-  let page
-  switch (route.name) {
-    case 'customers':
-      page = <CustomerList navigate={navigate} />
-      break
-    case 'customer-new':
-      page = <CustomerForm key="new" navigate={navigate} />
-      break
-    case 'customer-edit':
-      page = <CustomerForm key={route.params.id} navigate={navigate} id={route.params.id} />
-      break
-    case 'customer-enquiry':
-      page = <CustomerEnquiry key={route.params.id || 'none'} navigate={navigate} id={route.params.id} />
-      break
-    case 'customer-reports':
-      page = <CustomerReports navigate={navigate} custId={route.params.custId} />
-      break
-    case 'soon':
-      page = (
-        <div className="card">
-          <div className="card-body">
-            <h3>{route.params.title}</h3>
-            <p className="muted" style={{ margin: 0 }}>
-              This module is part of the planned build (see reference-pifi/ANALYSIS.md). Not built yet.
-            </p>
-          </div>
-        </div>
-      )
-      break
-    case 'dashboard':
-    default:
-      page = <Dashboard navigate={navigate} />
+  function renderPage() {
+    const SettingsScreen = SETTINGS_SCREENS[route.name]
+    if (SettingsScreen) return <SettingsScreen key={route.name} session={session} navigate={navigate} />
+
+    switch (route.name) {
+      case 'customers':
+        return <CustomerList navigate={navigate} />
+      case 'customer-new':
+        return <CustomerForm key="new" navigate={navigate} />
+      case 'customer-edit':
+        return <CustomerForm key={route.params.id} navigate={navigate} id={route.params.id} />
+      case 'customer-enquiry':
+        return <CustomerEnquiry key={route.params.id || 'none'} navigate={navigate} id={route.params.id} />
+      case 'customer-reports':
+        return <CustomerReports navigate={navigate} custId={route.params.custId} />
+      case 'soon':
+        return (
+          <ComingSoon
+            key={route.params.title}
+            navigate={navigate}
+            title={route.params.title}
+            parent={route.params.parent}
+            ico={route.params.ico}
+          />
+        )
+      default:
+        return <Dashboard navigate={navigate} session={session} />
+    }
   }
 
   return (
@@ -88,7 +118,7 @@ export default function App() {
       onLogout={logout}
       onSwitchBranch={switchBranch}
     >
-      {page}
+      <ErrorBoundary resetKey={route.name}>{renderPage()}</ErrorBoundary>
     </Layout>
   )
 }
