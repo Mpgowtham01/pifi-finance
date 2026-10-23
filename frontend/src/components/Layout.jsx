@@ -144,6 +144,9 @@ for (const it of MENU) {
   for (const c of it.children || []) if (c.route) ALL_TITLES[c.route] ??= c.label
 }
 
+// matchMedia is missing outside a browser; default to the wide layout there.
+const matches = (q) => (typeof window !== 'undefined' && window.matchMedia ? window.matchMedia(q).matches : false)
+
 export default function Layout({ session, route, navigate, onLogout, onSwitchBranch, children }) {
   const [open, setOpen] = useState(false) // the drawer, on a narrow screen
   // Collapsed to an icon rail on a wide screen. Remembered between visits.
@@ -167,9 +170,20 @@ export default function Layout({ session, route, navigate, onLogout, onSwitchBra
     }
   }, [rail])
 
-  const narrow = () => window.matchMedia('(max-width: 820px)').matches
+  // The toggle does two jobs, so it has to know which screen it is on.
+  const [narrow, setNarrow] = useState(() => matches('(max-width: 820px)'))
+  useEffect(() => {
+    const mq = window.matchMedia?.('(max-width: 820px)')
+    if (!mq) return
+    const on = (e) => setNarrow(e.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+
   // The same button slides the drawer on a phone and collapses the rail on a desktop.
-  const toggleSidebar = () => (narrow() ? setOpen((o) => !o) : setRail((r) => !r))
+  const toggleSidebar = () => (narrow ? setOpen((o) => !o) : setRail((r) => !r))
+  // The arrow points the way the menu will go: left to tuck away, right to bring back.
+  const willClose = narrow ? open : !rail
 
   const title = route.name === 'soon' ? route.params.title : ALL_TITLES[route.name] || 'PiFi'
 
@@ -265,12 +279,22 @@ export default function Layout({ session, route, navigate, onLogout, onSwitchBra
         <header className="topbar">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
-              className="btn ghost hamburger"
+              className={`nav-toggle${willClose ? '' : ' flipped'}`}
               onClick={toggleSidebar}
-              title={rail ? 'Expand the menu' : 'Collapse the menu'}
-              aria-label={rail ? 'Expand the menu' : 'Collapse the menu'}
+              title={willClose ? 'Hide the menu' : 'Show the menu'}
+              aria-label={willClose ? 'Hide the menu' : 'Show the menu'}
+              aria-expanded={willClose}
             >
-              ☰
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M14.5 6.5 9 12l5.5 5.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
             <span className="page-title">{title}</span>
           </div>

@@ -118,7 +118,20 @@ h1, h2, h3, h4 { margin: 0 0 0.5rem; font-weight: 600; }
   background: rgba(79, 70, 229, 0.3); border-radius: 8px;
 }
 
-.hamburger { display: inline-flex; }
+/* the one control that hides and brings back the menu */
+.nav-toggle {
+  width: 34px; height: 34px; flex-shrink: 0; padding: 0; cursor: pointer;
+  display: inline-grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 9px;
+  background: var(--surface); color: var(--text-muted);
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.nav-toggle:hover { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+.nav-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.nav-toggle svg { width: 20px; height: 20px; transition: transform .24s cubic-bezier(.22, 1, .36, 1); }
+/* the arrow points left to tuck the menu away, right to bring it back */
+.nav-toggle.flipped svg { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .nav-toggle svg { transition: none; } }
 /* tapping the page behind the drawer closes it */
 .sidebar-backdrop {
   position: fixed; inset: 0; z-index: 35; background: rgba(15, 23, 42, 0.45);
@@ -374,46 +387,73 @@ table.grid tr:last-child td { border-bottom: 0; }
 .kpi-dot.on .kpi-dot-fill { animation: dotFill linear forwards; }
 @keyframes dotFill { from { width: 0; } to { width: 100%; } }
 
-.module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+/* Module tiles. Eight saturated backgrounds fought each other and put the
+   figures in white on colour; the numbers are the point, so the card is a
+   plain surface and the module's colour is carried by its icon and a top
+   rule. Hues are the validated categorical set, fixed per module. */
+.module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
 .module-card {
-  position: relative; overflow: hidden;
-  text-align: left; border: 0; cursor: pointer; color: #fff; font-family: inherit;
-  border-radius: 14px; padding: 18px 20px; min-height: 124px;
-  display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-sm);
-  transition: transform .18s cubic-bezier(.22, 1, .36, 1), box-shadow .18s ease;
+  position: relative; overflow: hidden; isolation: isolate;
+  text-align: left; cursor: pointer; font-family: inherit; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 18px 15px; min-height: 128px;
+  display: flex; flex-direction: column; gap: 13px; box-shadow: var(--shadow-sm);
+  transition: transform .18s cubic-bezier(.22, 1, .36, 1), box-shadow .18s ease,
+    border-color .18s ease;
 }
-/* a light sweeps across the card on hover */
+/* the module's colour, as a rule across the top */
+.module-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--tone); transform: scaleX(1); transform-origin: left;
+}
+/* and as the faintest wash, which deepens on hover */
 .module-card::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.22) 50%, transparent 65%);
-  transform: translateX(-120%);
-  transition: transform .6s ease;
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--tone); opacity: 0; transition: opacity .18s ease;
 }
-.module-card:hover { transform: translateY(-4px); box-shadow: 0 12px 26px rgba(15, 23, 42, 0.18); }
-.module-card:hover::after { transform: translateX(120%); }
-.module-top { display: flex; align-items: center; gap: 9px; }
+.module-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--tone) 45%, var(--border));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+.module-card:hover::after { opacity: 0.05; }
+.module-card:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; }
+
+.module-top { display: flex; align-items: center; gap: 10px; }
 .module-ico {
-  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.2); display: grid; place-items: center; font-size: 15px;
+  width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 15px;
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
 }
-.module-title { font-size: 16px; font-weight: 700; flex: 1; }
-.module-go { font-size: 17px; opacity: 0; transform: translateX(-6px); transition: all .18s ease; }
-.module-card:hover .module-go { opacity: 0.9; transform: none; }
-.module-stats { display: flex; flex-direction: column; gap: 5px; }
-.module-stat { display: flex; justify-content: space-between; font-size: 13px; opacity: 0.96; }
-.module-stat .ms-label { opacity: 0.85; }
-.module-stat .ms-val { font-weight: 700; }
-.tone-sky    { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
-.tone-red    { background: linear-gradient(135deg, #ef4444, #dc2626); }
-.tone-teal   { background: linear-gradient(135deg, #14b8a6, #0d9488); }
-.tone-cyan   { background: linear-gradient(135deg, #06b6d4, #0891b2); }
-.tone-green  { background: linear-gradient(135deg, #22c55e, #16a34a); }
-.tone-pink   { background: linear-gradient(135deg, #ec4899, #db2777); }
-.tone-coral  { background: linear-gradient(135deg, #fb7185, #f43f5e); }
-.tone-indigo { background: linear-gradient(135deg, #4f46e5, #4338ca); }
+.module-title { font-size: 15px; font-weight: 700; flex: 1; letter-spacing: -0.01em; }
+.module-go {
+  font-size: 16px; color: var(--tone);
+  opacity: 0; transform: translateX(-6px); transition: opacity .18s ease, transform .18s ease;
+}
+.module-card:hover .module-go { opacity: 1; transform: none; }
+
+.module-stats { display: flex; flex-direction: column; gap: 6px; }
+.module-stat { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.module-stat .ms-label { color: var(--text-muted); }
+.module-stat .ms-val { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* the validated categorical hues, one fixed slot per module */
+.tone-sky    { --tone: #2a78d6; }
+.tone-red    { --tone: #eb6834; }
+.tone-teal   { --tone: #1baf7a; }
+.tone-cyan   { --tone: #eda100; }
+.tone-green  { --tone: #008300; }
+.tone-pink   { --tone: #e87ba4; }
+.tone-coral  { --tone: #e34948; }
+.tone-indigo { --tone: #6250d6; }
 
 .dash-cols { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
 .chart-wrap { position: relative; }
+.chart-wrap svg { display: block; }
+/* text wears text tokens, at a real pixel size — the svg is drawn 1:1 */
+.chart-wrap .bar-value { font-size: 12px; font-weight: 700; fill: var(--text); }
+.chart-wrap .bar-label { font-size: 12px; fill: var(--text-muted); }
+.chart-wrap .bar { cursor: default; }
 .chart-empty { text-align: center; padding: 8px 0 2px; font-size: 13px; }
 
 .recent-list { display: flex; flex-direction: column; }
@@ -479,7 +519,6 @@ table.grid tr:last-child td { border-bottom: 0; }
   .sidebar.rail .nav .submenu { display: flex; }
   .sidebar.rail .nav .ico { width: 18px; font-size: inherit; }
   .content { padding: 16px; }
-  .hamburger { display: inline-flex; }
   .dash-hero { flex-direction: column; align-items: flex-start; }
 }
 

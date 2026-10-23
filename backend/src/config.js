@@ -13,7 +13,13 @@ export const paths = {
 function required(name) {
   const v = process.env[name]
   if (!v) {
-    console.error(`\nMissing ${name} in .env — copy .env.example to .env and fill it in.\n`)
+    // On a host there is no .env — the value comes from the service's
+    // environment settings, so say both.
+    console.error(
+      `\nMissing ${name}.\n` +
+        `  Locally: copy backend/.env.example to backend/.env and fill it in.\n` +
+        `  On a host: set ${name} in the service's environment variables.\n`
+    )
     process.exit(1)
   }
   return v

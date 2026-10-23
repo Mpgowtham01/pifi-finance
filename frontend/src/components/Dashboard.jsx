@@ -242,41 +242,75 @@ function fmt(n) {
 const reducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-// Single-series bar chart (inline SVG): indigo bars, rounded tops, per-bar
-// hover. Each bar grows from the baseline as the card appears.
+// New customers per month. One series, so one hue and no legend.
+//
+// The SVG is drawn at the pixel width it actually occupies rather than
+// stretched from a fixed viewBox — scaling a viewBox scales the type with it,
+// which is what made the month labels come out oversized.
 function BarChart({ trend }) {
+  const wrap = useRef(null)
+  const [w, setW] = useState(560)
   const [hover, setHover] = useState(null)
-  const max = Math.max(1, ...trend.map((t) => t.count))
-  const allZero = trend.every((t) => t.count === 0)
 
-  const W = 520, H = 200, padB = 28, padT = 16, padX = 8
-  const plotH = H - padB - padT
-  const n = trend.length
-  const slot = (W - padX * 2) / n
-  const barW = Math.min(44, slot * 0.55)
+  useEffect(() => {
+    const el = wrap.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(([e]) => setW(Math.max(240, Math.round(e.contentRect.width))))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const H = 208
+  const padT = 26
+  const padB = 28
+  const padX = 4
+  const plotH = H - padT - padB
+  const base = H - padB
+
+  const counts = trend.map((t) => t.count)
+  const peak = Math.max(...counts)
+  const allZero = peak === 0
+  const max = niceMax(peak)
+  const n = trend.length || 1
+  const slot = (w - padX * 2) / n
+  const barW = Math.min(46, Math.max(10, slot * 0.5))
+  // Label only what earns it: the month under the pointer, else the best month.
+  const labelled = hover ?? counts.indexOf(peak)
 
   return (
-    <div className="chart-wrap">
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        width="100%"
-        preserveAspectRatio="xMidYMid meet"
-        role="img"
-        aria-label="New customers per month"
-      >
-        <line x1={padX} y1={H - padB} x2={W - padX} y2={H - padB} stroke="var(--border)" strokeWidth="1" />
+    <div className="chart-wrap" ref={wrap}>
+      <svg width={w} height={H} role="img" aria-label="New customers per month">
+        {/* recessive grid, so the bars carry the reading */}
+        {[0, 0.5, 1].map((f) => (
+          <line
+            key={f}
+            x1={padX}
+            x2={w - padX}
+            y1={base - plotH * f}
+            y2={base - plotH * f}
+            stroke="var(--border)"
+            strokeWidth="1"
+            strokeDasharray={f === 0 ? undefined : '3 4'}
+          />
+        ))}
+
         {trend.map((t, i) => {
           const h = allZero ? 0 : (t.count / max) * plotH
           const x = padX + slot * i + (slot - barW) / 2
-          const y = H - padB - h
+          const y = base - h
           const on = hover === i
           return (
-            <g key={i} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
-              <rect x={padX + slot * i} y={padT} width={slot} height={H - padB - padT} fill="transparent" />
+            <g
+              key={t.label}
+              onMouseEnter={() => setHover(i)}
+              onMouseLeave={() => setHover(null)}
+            >
+              {/* a hit area wider than the bar */}
+              <rect x={padX + slot * i} y={padT} width={slot} height={plotH} fill="transparent" />
               {h > 0 && (
                 <rect
                   className="bar"
-                  style={{ '--grow-delay': `${i * 70}ms`, transformOrigin: `center ${H - padB}px` }}
+                  style={{ '--grow-delay': `${i * 70}ms`, transformOrigin: `center ${base}px` }}
                   x={x}
                   y={y}
                   width={barW}
@@ -285,16 +319,12 @@ function BarChart({ trend }) {
                   fill={on ? 'var(--primary-hover)' : 'var(--primary)'}
                 />
               )}
-              <text x={x + barW / 2} y={y - 6} textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--text)">
-                {t.count || ''}
-              </text>
-              <text
-                x={padX + slot * i + slot / 2}
-                y={H - padB + 18}
-                textAnchor="middle"
-                fontSize="12"
-                fill="var(--text-muted)"
-              >
+              {i === labelled && t.count > 0 && (
+                <text x={x + barW / 2} y={y - 8} textAnchor="middle" className="bar-value">
+                  {fmt(t.count)}
+                </text>
+              )}
+              <text x={padX + slot * i + slot / 2} y={base + 18} textAnchor="middle" className="bar-label">
                 {t.label}
               </text>
             </g>
@@ -304,4 +334,16 @@ function BarChart({ trend }) {
       {allZero && <div className="chart-empty muted">No customers added in the last 6 months yet.</div>}
     </div>
   )
+}
+
+// The top of the scale: a round number just above the tallest bar, so there is
+// a little headroom without throwing away half the height.
+function niceMax(peak) {
+  if (peak <= 0) return 1
+  const target = peak * 1.08
+  const mag = Math.pow(10, Math.floor(Math.log10(target)))
+  for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 7.5]) {
+    if (mag * m >= target) return mag * m
+  }
+  return mag * 10
 }
