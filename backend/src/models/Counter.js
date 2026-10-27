@@ -21,4 +21,12 @@ counterSchema.statics.next = async function (key, start = 1) {
   return doc.seq
 }
 
+// What the next number WOULD be, without taking it. The master screen shows
+// the account number before anything is saved, and two clerks opening a blank
+// form must not burn two numbers between them.
+counterSchema.statics.peek = async function (key, start = 1) {
+  const doc = await this.findOne({ key })
+  return Math.max(doc ? doc.seq + 1 : 1, start)
+}
+
 export default mongoose.model('Counter', counterSchema)

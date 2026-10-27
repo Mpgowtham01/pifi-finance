@@ -1,4 +1,5 @@
-/* PiFi design system — a fresh, modern replacement for the old navy WebForms UI. */
+/* Thangarathnam Finance — a fresh, modern replacement for the old navy
+   WebForms UI. */
 :root {
   --bg: #f1f5f9;
   --surface: #ffffff;
@@ -56,10 +57,11 @@ h1, h2, h3, h4 { margin: 0 0 0.5rem; font-weight: 600; }
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .sidebar .brand .logo {
-  width: 32px; height: 32px; border-radius: 8px;
-  background: linear-gradient(135deg, #6366f1, #22d3ee);
-  display: grid; place-items: center; color: #fff; font-weight: 800;
+  width: 34px; height: 34px; flex: none; border-radius: 8px;
+  object-fit: contain; background: #fff; padding: 2px;
 }
+/* The company name is long, so it wraps rather than running off the rail. */
+.sidebar .brand > span:last-child { font-size: 16px; line-height: 1.25; }
 .nav { padding: 10px 10px 24px; display: flex; flex-direction: column; gap: 2px; }
 .nav .group-label {
   font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
@@ -147,8 +149,28 @@ h1, h2, h3, h4 { margin: 0 0 0.5rem; font-weight: 600; }
   padding: 0 24px; position: sticky; top: 0; z-index: 10;
 }
 .topbar .page-title { font-size: 17px; font-weight: 600; }
+
+/* The breadcrumb. Every crumb but the last goes back to that screen, so the
+   ones that do are shaped like something you can press. */
+.crumbs { display: flex; align-items: center; gap: 2px; min-width: 0; flex-wrap: wrap; }
+.crumb {
+  font-family: inherit; font-size: 14.5px; line-height: 1.3;
+  padding: 4px 7px; border: 0; border-radius: 6px;
+  background: none; color: var(--text-muted);
+}
+button.crumb { cursor: pointer; }
+button.crumb:hover { color: var(--primary); background: var(--primary-soft); }
+button.crumb:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.crumb.current { color: var(--text); font-weight: 600; font-size: 17px; padding-left: 4px; }
+.crumb-sep { color: #cbd5e1; font-size: 16px; line-height: 1; user-select: none; }
+
+/* On a phone the trail would push the account chip off the bar, so only the
+   screen you are on survives — the sidebar is the way back there. */
+@media (max-width: 720px) {
+  .crumbs button.crumb, .crumb-sep { display: none; }
+}
 .topbar .right { display: flex; align-items: center; gap: 14px; }
-.content { padding: 24px; flex: 1; }
+.content { padding: 24px; flex: 1; max-width: 1520px; }
 
 .branch-switch select {
   font-family: inherit; font-size: 13px; padding: 7px 10px;
@@ -249,9 +271,58 @@ table.grid tr:last-child td { border-bottom: 0; }
 }
 .search input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
 
+/* Dropdowns sitting in a toolbar match the search box beside them: same
+   height, same border, same rounding, and our chevron instead of the
+   platform's. The right padding leaves room for it. */
+.toolbar select {
+  font-family: inherit; font-size: 14px;
+  padding: 10px 34px 10px 13px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background-color: var(--surface); color: var(--text);
+  cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.75 4.5 6 7.75 9.25 4.5' fill='none' stroke='%2364748b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+}
+.toolbar select:hover { border-color: #cbd5e1; }
+.toolbar select:focus {
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
 .muted { color: var(--text-muted); }
 .right-align { text-align: right; }
 .pager { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 14px; }
+
+/* ---------- share certificate ---------- */
+/* Printed as it stands, so it carries its own frame and spacing rather than
+   relying on the card around it. */
+.certificate {
+  border: 2px solid var(--text); border-radius: 4px;
+  padding: 28px 32px; margin-top: 18px; background: #fff; color: #000;
+}
+.cert-head { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #999; padding-bottom: 14px; }
+.cert-logo { width: 64px; height: 64px; object-fit: contain; flex: none; }
+.cert-head h1 { margin: 0; font-size: 22px; }
+.cert-head p { margin: 4px 0 0; font-size: 12px; color: #444; }
+.cert-title {
+  text-align: center; font-size: 17px; letter-spacing: 3px; text-transform: uppercase;
+  margin: 20px 0 18px;
+}
+.cert-grid { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.cert-grid th, .cert-grid td { border: 1px solid #999; padding: 8px 10px; text-align: left; }
+.cert-grid th { width: 150px; background: #f4f4f4; font-weight: 600; }
+.cert-words { margin: 20px 0 36px; font-size: 13.5px; line-height: 1.7; }
+.cert-signs { display: flex; justify-content: space-between; font-size: 13px; }
+.cert-signs span { border-top: 1px solid #000; padding-top: 6px; min-width: 170px; text-align: center; }
+
+@media print {
+  .no-print, .sidebar, .topbar { display: none !important; }
+  .content { padding: 0; max-width: none; }
+  .card { border: 0; box-shadow: none; }
+  .certificate { border-width: 1px; margin: 0; }
+}
 
 /* ---------- notices ---------- */
 .notice { padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13.5px; margin-bottom: 14px; }
@@ -278,9 +349,8 @@ table.grid tr:last-child td { border-bottom: 0; }
   border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
 .login-card .head { padding: 28px 28px 10px; text-align: center; }
 .login-card .head .logo {
-  width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 12px;
-  background: linear-gradient(135deg, #6366f1, #22d3ee); display: grid; place-items: center;
-  color: #fff; font-weight: 800; font-size: 22px;
+  width: 64px; height: 64px; border-radius: 16px; margin: 0 auto 12px;
+  display: block; object-fit: contain; background: #fff;
 }
 .login-card .head h1 { font-size: 20px; margin: 0; }
 .login-card .head p { color: var(--text-muted); margin: 4px 0 0; font-size: 13px; }
@@ -536,6 +606,8 @@ table.grid td.clamp {
 .recent-avatar.sm { width: 28px; height: 28px; font-size: 11px; overflow: hidden; }
 .recent-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .row-actions { display: inline-flex; gap: 4px; justify-content: flex-end; }
+/* Holds a missing action's place so a column of buttons stays a column. */
+.icon-slot { display: inline-block; width: 30px; height: 30px; }
 .icon-btn {
   width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
   background: var(--surface); cursor: pointer; font-size: 14px; line-height: 1;
@@ -680,6 +752,21 @@ table.grid td.clamp {
 .enquiry-who p { margin: 0 0 10px; max-width: 560px; }
 .enquiry-id { font-size: 12px; color: var(--text-muted); letter-spacing: 0.08em; }
 .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* A filter strip: the chips that narrow the list, then the controls that
+   search it, on one surface so they read as one thing. */
+.filter-bar {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  padding: 14px 16px; margin-bottom: 16px;
+}
+.filter-bar .chip-row {
+  padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.filter-bar .toolbar { margin-bottom: 0; }
+/* Inside the strip the controls sit on it, not in another box of their own. */
+.filter-bar .search input, .filter-bar select { background-color: var(--surface-2); }
+.filter-bar .search input:focus, .filter-bar select:focus { background-color: var(--surface); }
 .badge.neutral { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
 .badge.warn { background: #fef3c7; color: var(--warning); }
 .enquiry-jewel { display: flex; flex-direction: column; gap: 6px; font-size: 12px; }

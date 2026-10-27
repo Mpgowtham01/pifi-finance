@@ -1016,6 +1016,20 @@
       "category": "JL",
       "glCode": "20125",
       "status": "A"
+    },
+    {
+      "code": "60020",
+      "name": "TREL",
+      "category": "JL",
+      "glCode": "20125",
+      "status": "A"
+    },
+    {
+      "code": "60021",
+      "name": "TRQL",
+      "category": "JL",
+      "glCode": "20125",
+      "status": "A"
     }
   ],
   "interestSlabs": [

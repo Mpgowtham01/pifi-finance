@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
+import { company } from '../company.js'
 
 // The top menu of the reference app, in its order (from Dashboard.aspx `ul.menu`):
 // Settings · Customer · Share · Savings · Term Deposit · Loan · Vouchers · Admin · Dashboard.
@@ -41,24 +42,23 @@ const MENU = [
   {
     key: 'share', label: 'Share', ico: '📈',
     children: [
-      { label: 'Share List', soon: 'Share List' },
-      { label: 'New Share', soon: 'Share Master' },
-      { label: 'Share Transfer', soon: 'Share Transfer' },
-      { label: 'Share Reports', soon: 'Share Reports' },
-      { label: 'Account Statement', soon: 'Share Account Statement' },
+      { label: 'Share Master', route: 'share-list' },
+      { label: 'Share Allotment Report', route: 'share-allotment' },
+      { label: 'Share Certificate', route: 'share-certificate' },
+      { label: 'Share Transfer', route: 'share-transfer' },
+      { label: 'Account Statement', route: 'share-statement' },
     ],
   },
   {
     key: 'savings', label: 'Savings', ico: '💰',
     children: [
-      { label: 'SB Accounts', soon: 'SB Accounts' },
-      { label: 'New SB Account', soon: 'Savings Master' },
-      { label: 'SB Transaction', soon: 'SB Transaction' },
-      { label: 'SB Closure', soon: 'SB Closure' },
-      { label: 'SB Product', soon: 'SB Product' },
-      { label: 'Account Statement', soon: 'SB Account Statement' },
-      { label: 'Outstanding', soon: 'SB Outstanding' },
-      { label: 'Savings Reports', soon: 'Savings Reports' },
+      { label: 'Savings A/c Master', route: 'sb-list' },
+      { label: 'Savings Transaction', route: 'sb-tran' },
+      { label: 'Half-yearly Product', route: 'sb-product' },
+      { label: 'SD Account Closure', route: 'sb-closure' },
+      { label: 'Account Statement', route: 'sb-statement' },
+      { label: 'Reports', route: 'sb-reports' },
+      { label: 'O/s as on', route: 'sb-os' },
     ],
   },
   {
@@ -85,17 +85,17 @@ const MENU = [
   {
     key: 'loan', label: 'Loan', ico: '💍',
     children: [
-      { label: 'Jewel Loan List', soon: 'Jewel Loan List' },
-      { label: 'New Jewel Loan', soon: 'Jewel Loan Master' },
-      { label: 'JL Receipt', soon: 'JL Receipt' },
-      { label: 'JL Stock Register', soon: 'JL Stock Register' },
-      { label: 'JL OD Report', soon: 'JL OD Report' },
-      { label: 'Auction Notification', soon: 'JML Auction Notification' },
-      { label: 'Repledge List', soon: 'Repledge List' },
-      { label: 'Repledge Closure', soon: 'Repledge Closure' },
-      { label: 'Demand Loan List', soon: 'Demand Loan List' },
-      { label: 'OL Receipt', soon: 'OL Receipt' },
-      { label: 'Loan Reports', soon: 'Loan Reports' },
+      { label: 'Jewel Loan', route: 'jl-list' },
+      { label: 'JL Receipt', route: 'jl-receipt' },
+      { label: 'JL Stock', route: 'jl-stock' },
+      { label: 'JL Reports', route: 'jl-reports' },
+      { label: 'JL O/s as on', route: 'jl-os' },
+      { label: 'JL OD Status', route: 'jl-od' },
+      { label: 'JL Notice', route: 'jl-notice' },
+      { label: 'Account Statement', route: 'jl-statement' },
+      { label: 'JL Repledge', route: 'jl-repledge' },
+      { label: 'JL Repledge Closure', route: 'jl-repledge-close' },
+      { label: 'New Jewel Loan', route: 'jl-new' },
     ],
   },
   {
@@ -127,9 +127,31 @@ function ownerOf(route) {
   const { name, params } = route
   if (name === 'soon' && params?.parent) return MENU.find((m) => m.label === params.parent)?.key || null
   if (name.startsWith('customer')) return 'customer'
+  if (name.startsWith('jl-')) return 'loan'
+  if (name.startsWith('share-')) return 'share'
+  if (name.startsWith('sb-')) return 'savings'
   if (name.startsWith('set-')) return 'settings'
   if (name === 'dashboard') return 'dashboard'
   return null
+}
+
+// Which screen each one is reached through. Anything not named here sits
+// directly under its module.
+const OPENED_FROM = {
+  'customer-new': 'customers',
+  'customer-edit': 'customers',
+  'customer-enquiry': 'customers',
+  'customer-reports': 'customers',
+  'jl-new': 'jl-list',
+  'jl-edit': 'jl-list',
+  'jl-view': 'jl-list',
+  'jl-receipt': 'jl-list',
+  'share-new': 'share-list',
+  'share-edit': 'share-list',
+  'share-view': 'share-list',
+  'sb-new': 'sb-list',
+  'sb-edit': 'sb-list',
+  'sb-view': 'sb-list',
 }
 
 const ALL_TITLES = {
@@ -138,10 +160,56 @@ const ALL_TITLES = {
   'customer-edit': 'Customer Master',
   'customer-enquiry': 'Customer Enquiry',
   'customer-reports': 'Customer Reports',
+  'sb-new': 'Savings A/c Master',
+  'sb-edit': 'Savings A/c Master',
+  'sb-view': 'Savings Account',
+  'share-new': 'Share Master',
+  'share-edit': 'Share Master',
+  'share-view': 'Share Holding',
+  'jl-new': 'Jewel Loan Master',
+  'jl-edit': 'Jewel Loan Master',
+  'jl-view': 'Jewel Loan',
+  'jl-repledge-close': 'JL Repledge Closure',
+  'jl-statement': 'Account Statement',
+  'jl-reports': 'JL Reports',
+  'jl-os': 'JL O/s as on',
 }
 for (const it of MENU) {
   if (it.route) ALL_TITLES[it.route] ??= it.label
   for (const c of it.children || []) if (c.route) ALL_TITLES[c.route] ??= c.label
+}
+
+// The trail to the current screen: its module, whatever it was opened
+// through, and itself. Only the last crumb is the page you are on.
+function crumbsFor(route) {
+  const titleOf = (name, params) =>
+    name === 'soon' ? params?.title || 'Soon' : ALL_TITLES[name] || name
+
+  const trail = []
+  const owner = ownerOf(route)
+  const module = MENU.find((m) => m.key === owner)
+  // A module is a section of the app, not a screen. Only the few that have a
+  // page of their own — Dashboard — are somewhere to go back to.
+  if (module) trail.push({ label: module.label, route: module.route || null })
+
+  // Walk back up the chain of screens this one was opened through.
+  const chain = []
+  const guard = new Set([route.name])
+  let cur = route.name
+  while (OPENED_FROM[cur] && !guard.has(OPENED_FROM[cur])) {
+    cur = OPENED_FROM[cur]
+    guard.add(cur)
+    chain.unshift({ label: titleOf(cur), route: cur })
+  }
+  trail.push(...chain)
+
+  // The page itself, named by its record where the address carries one.
+  const own = titleOf(route.name, route.params)
+  trail.push({ label: route.params?.accNo ? `${own} · ${route.params.accNo}` : own, route: null })
+
+  // A module whose landing page is this very screen would say the same thing
+  // twice.
+  return trail.filter((c, i) => i === 0 || c.label !== trail[i - 1].label)
 }
 
 // matchMedia is missing outside a browser; default to the wide layout there.
@@ -185,7 +253,7 @@ export default function Layout({ session, route, navigate, onLogout, onSwitchBra
   // The arrow points the way the menu will go: left to tuck away, right to bring back.
   const willClose = narrow ? open : !rail
 
-  const title = route.name === 'soon' ? route.params.title : ALL_TITLES[route.name] || 'PiFi'
+  const crumbs = crumbsFor(route)
 
   // Moving to a screen in another module opens that module's group.
   useEffect(() => {
@@ -223,9 +291,9 @@ export default function Layout({ session, route, navigate, onLogout, onSwitchBra
     <div className="app">
       {open && <div className="sidebar-backdrop" onClick={() => setOpen(false)} aria-hidden="true" />}
       <aside className={`sidebar${open ? ' open' : ''}${rail ? ' rail' : ''}`}>
-        <div className="brand">
-          <span className="logo">Pi</span>
-          <span>PiFi Finance</span>
+        <div className="brand" title={company.name}>
+          <img className="logo" src={company.logo} alt="" />
+          <span>{company.name}</span>
         </div>
         <nav className="nav">
           {MENU.map((it) => {
@@ -296,7 +364,29 @@ export default function Layout({ session, route, navigate, onLogout, onSwitchBra
                 />
               </svg>
             </button>
-            <span className="page-title">{title}</span>
+            <nav className="crumbs" aria-label="Breadcrumb">
+              {crumbs.map((c, i) => {
+                const last = i === crumbs.length - 1
+                return (
+                  <Fragment key={`${c.label}-${i}`}>
+                    {i > 0 && (
+                      <span className="crumb-sep" aria-hidden="true">
+                        ›
+                      </span>
+                    )}
+                    {c.route && !last && c.route !== route.name ? (
+                      <button type="button" className="crumb" onClick={() => navigate(c.route)}>
+                        {c.label}
+                      </button>
+                    ) : (
+                      <span className={`crumb${last ? ' current' : ''}`} aria-current={last ? 'page' : undefined}>
+                        {c.label}
+                      </span>
+                    )}
+                  </Fragment>
+                )
+              })}
+            </nav>
           </div>
           <div className="right">
             <div className="branch-switch">
