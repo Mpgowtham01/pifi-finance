@@ -18,6 +18,14 @@ import {
 import JlStatement from './components/loans/JlStatement.jsx'
 import JlLoanReports from './components/loans/JlLoanReports.jsx'
 import { RepledgeList, RepledgeClosure } from './components/loans/Repledge.jsx'
+import FdList from './components/deposits/FdList.jsx'
+import FdForm from './components/deposits/FdForm.jsx'
+import {
+  FdView, FdInterestPayment, FdClosure, FdRenewal,
+} from './components/deposits/FdScreens.jsx'
+import {
+  FdMaturity, FdReportsScreen, FdStatement, FdOutstanding,
+} from './components/deposits/FdReports.jsx'
 import SavingsList from './components/savings/SavingsList.jsx'
 import SavingsForm from './components/savings/SavingsForm.jsx'
 import {
@@ -177,6 +185,29 @@ export default function App() {
         return <JlOdReport navigate={navigate} />
       case 'jl-notice':
         return <JlAuctionNotice navigate={navigate} />
+      case 'fd-list':
+        return <FdList navigate={navigate} />
+      case 'fd-new':
+        return <FdForm key="new" navigate={navigate} />
+      case 'fd-edit':
+        return <FdForm key={route.params.id} navigate={navigate} id={route.params.id} />
+      case 'fd-view':
+        return <FdView key={route.params.id} navigate={navigate} id={route.params.id} session={session} />
+      case 'fd-interest':
+        return <FdInterestPayment key={route.params.accNo || 'blank'} navigate={navigate} accNo={route.params.accNo} />
+      case 'fd-maturity':
+        return <FdMaturity navigate={navigate} />
+      case 'fd-closure':
+        return <FdClosure key={route.params.accNo || 'blank'} navigate={navigate} accNo={route.params.accNo} />
+      case 'fd-renewal':
+        return <FdRenewal key={route.params.accNo || 'blank'} navigate={navigate} accNo={route.params.accNo} />
+      case 'fd-reports':
+        return <FdReportsScreen navigate={navigate} />
+      case 'fd-statement':
+        return <FdStatement key={route.params.accNo || 'blank'} navigate={navigate} accNo={route.params.accNo} />
+      case 'fd-os':
+        return <FdOutstanding navigate={navigate} />
+
       case 'sb-list':
         return <SavingsList navigate={navigate} />
       case 'sb-new':

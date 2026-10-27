@@ -64,22 +64,14 @@ const MENU = [
   {
     key: 'term', label: 'Term Deposit', ico: '🏦',
     children: [
-      { label: 'FD List', soon: 'FD List' },
-      { label: 'New FD', soon: 'Fixed Deposit Master' },
-      { label: 'Kamadenu Deposit', soon: 'Kamadenu Deposit Master' },
-      { label: 'Deposit Loan', soon: 'Deposit Loan Master' },
-      { label: 'FD Interest Payment', soon: 'FD Interest Payment' },
-      { label: 'FD Maturity', soon: 'FD Maturity' },
-      { label: 'FD Renewal', soon: 'FD Renewal' },
-      { label: 'FD Closure', soon: 'FD Account Closure' },
-      { label: 'FD Reports', soon: 'FD Reports' },
-      { label: 'RD List', soon: 'RD List' },
-      { label: 'New RD', soon: 'Recurring Deposit' },
-      { label: 'RD Receipt', soon: 'RD Receipt' },
-      { label: 'RD Standing Instruction', soon: 'RD Standing Instruction' },
-      { label: 'RD Pending Installments', soon: 'RD Pending Installments' },
-      { label: 'RD Closure', soon: 'RD Account Closure' },
-      { label: 'RD Reports', soon: 'RD Reports' },
+      { label: 'FD Account Master', route: 'fd-list' },
+      { label: 'FD Interest Payment', route: 'fd-interest' },
+      { label: 'FD Maturity', route: 'fd-maturity' },
+      { label: 'FD Account Closure', route: 'fd-closure' },
+      { label: 'FD Renewal', route: 'fd-renewal' },
+      { label: 'FD Reports', route: 'fd-reports' },
+      { label: 'Account Statement', route: 'fd-statement' },
+      { label: 'O/s as on', route: 'fd-os' },
     ],
   },
   {
@@ -130,6 +122,7 @@ function ownerOf(route) {
   if (name.startsWith('jl-')) return 'loan'
   if (name.startsWith('share-')) return 'share'
   if (name.startsWith('sb-')) return 'savings'
+  if (name.startsWith('fd-')) return 'term'
   if (name.startsWith('set-')) return 'settings'
   if (name === 'dashboard') return 'dashboard'
   return null
@@ -152,6 +145,9 @@ const OPENED_FROM = {
   'sb-new': 'sb-list',
   'sb-edit': 'sb-list',
   'sb-view': 'sb-list',
+  'fd-new': 'fd-list',
+  'fd-edit': 'fd-list',
+  'fd-view': 'fd-list',
 }
 
 const ALL_TITLES = {
@@ -160,6 +156,9 @@ const ALL_TITLES = {
   'customer-edit': 'Customer Master',
   'customer-enquiry': 'Customer Enquiry',
   'customer-reports': 'Customer Reports',
+  'fd-new': 'Fixed Deposit Master',
+  'fd-edit': 'Fixed Deposit Master',
+  'fd-view': 'Fixed Deposit',
   'sb-new': 'Savings A/c Master',
   'sb-edit': 'Savings A/c Master',
   'sb-view': 'Savings Account',

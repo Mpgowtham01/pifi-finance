@@ -13,6 +13,7 @@ import settingsRoutes from './routes/settings.js'
 import loanRoutes from './routes/loans.js'
 import shareRoutes from './routes/shares.js'
 import savingsRoutes from './routes/savings.js'
+import depositRoutes from './routes/deposits.js'
 
 const app = express()
 app.set('trust proxy', 1)
@@ -51,6 +52,7 @@ app.use('/api/settings', settingsRoutes)
 app.use('/api/loans', loanRoutes)
 app.use('/api/shares', shareRoutes)
 app.use('/api/savings', savingsRoutes)
+app.use('/api/deposits', depositRoutes)
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'No such endpoint.' }))
 
