@@ -307,46 +307,13 @@ export function RepledgeClosure({ navigate, id, accNo: initialAccNo }) {
     }
   }
 
-  if (!data) {
-    return (
-      <div className="master">
-        <div className="card">
-          <header className="master-head">
-            <div>
-              <h2>JL Repledge Closure</h2>
-              <p className="muted">Bring a bundle of pledges back from the bank.</p>
-            </div>
-          </header>
-          <div className="master-body">
-            {error && <div className="notice error">{error}</div>}
-            <form className="frm" onSubmit={findByAccNo}>
-              <Row label="Reference" req>
-                <div className="input-with-btn">
-                  <input
-                    className="mono"
-                    value={accNo}
-                    onChange={(e) => setAccNo(e.target.value)}
-                    placeholder="RP20100001"
-                    autoFocus
-                  />
-                  <button type="submit" className="btn ghost">
-                    Go
-                  </button>
-                </div>
-              </Row>
-              <Row label=" ">
-                <button type="button" className="btn" onClick={() => navigate('jl-repledge')}>
-                  Pick one from the list
-                </button>
-              </Row>
-            </form>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // Drawn before a re-pledge is found, so every field reads through a
+  // stand-in and the formatter turns a missing number into a blank.
+  const repledge = data?.repledge || {}
+  const quote = data?.quote || {}
+  const loans = data?.loans || []
+  const ready = !!data
 
-  const { repledge, quote, loans } = data
 
   return (
     <div className="master">
@@ -355,7 +322,7 @@ export function RepledgeClosure({ navigate, id, accNo: initialAccNo }) {
           <div>
             <h2>Re-pledge Closure</h2>
             <p className="muted">
-              {repledge.accNo} · {repledge.bankName} · {repledge.bankAccNo}
+              {ready ? `${repledge.accNo} · ${repledge.bankName}` : 'Bring a bundle of pledges back from the bank'}
             </p>
           </div>
           <div className="master-head-right">
@@ -374,22 +341,47 @@ export function RepledgeClosure({ navigate, id, accNo: initialAccNo }) {
           </div>
 
           <div className="frm" style={{ marginTop: 18 }}>
-            <Row label="Open / Due">{fmtDate(repledge.openDate)} — {fmtDate(repledge.dueDate)}</Row>
-            <Row label="Rate">{repledge.interestRate}% · {repledge.compounding}</Row>
+            <Row label="Reference" req>
+              <div className="input-with-btn">
+                <input
+                  className="mono"
+                  value={accNo}
+                  onChange={(e) => setAccNo(e.target.value)}
+                  onBlur={findByAccNo}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      findByAccNo(e)
+                    }
+                  }}
+                  placeholder="RP20100001"
+                />
+                <button type="button" className="btn ghost" onClick={findByAccNo}>
+                  Go
+                </button>
+              </div>
+            </Row>
+            <Row label="Bank">
+              <input value={ready ? `${repledge.bankName} · ${repledge.bankAccNo}` : ''} readOnly />
+            </Row>
+            <Row label="Open / Due">
+              {ready ? `${fmtDate(repledge.openDate)} — ${fmtDate(repledge.dueDate)}` : '—'}
+            </Row>
+            <Row label="Rate">{ready ? `${repledge.interestRate}% · ${repledge.compounding}` : '—'}</Row>
             <Row label="Trans. date">
-              <input type="date" value={form.transDate} onChange={set('transDate')} />
+              <input type="date" value={form.transDate} onChange={set('transDate')} disabled={!ready} />
             </Row>
             <Row label="Principal paid">
-              <input type="number" step="0.01" value={form.principalPayable} onChange={set('principalPayable')} />
+              <input type="number" step="0.01" value={form.principalPayable} onChange={set('principalPayable')} disabled={!ready} />
             </Row>
             <Row label="Interest paid">
-              <input type="number" step="0.01" value={form.interestPayable} onChange={set('interestPayable')} />
+              <input type="number" step="0.01" value={form.interestPayable} onChange={set('interestPayable')} disabled={!ready} />
             </Row>
             <Row label="Total">
               <input value={fmtMoney(total)} readOnly />
             </Row>
             <Row label="Narration" span={3}>
-              <input value={form.narration} onChange={set('narration')} />
+              <input value={form.narration} onChange={set('narration')} disabled={!ready} />
             </Row>
           </div>
 
@@ -424,7 +416,7 @@ export function RepledgeClosure({ navigate, id, accNo: initialAccNo }) {
           <button className="btn ghost" onClick={() => navigate('jl-repledge')} disabled={busy}>
             Close
           </button>
-          <button className="btn primary" onClick={close} disabled={busy}>
+          <button className="btn primary" onClick={close} disabled={busy || !ready}>
             {busy ? 'Saving…' : 'Close the re-pledge'}
           </button>
         </div>

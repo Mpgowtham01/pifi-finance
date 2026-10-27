@@ -487,8 +487,12 @@ export function SavingsClosure({ navigate, accNo: initialAccNo }) {
   }, [initialAccNo, lookup])
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
-  const payable = quote
-    ? Math.round((quote.balance + n(form.interest) - n(form.closureCharges)) * 100) / 100
+  // Drawn before an account is found, so the fields read through a stand-in.
+  const q = quote || {}
+  const a = quote?.account || {}
+  const ready = !!quote
+  const payable = ready
+    ? Math.round((q.balance + n(form.interest) - n(form.closureCharges)) * 100) / 100
     : 0
 
   async function close(e) {
@@ -585,51 +589,59 @@ export function SavingsClosure({ navigate, accNo: initialAccNo }) {
             </Row>
           </div>
 
-          {quote && (
-            <>
-              <div className="stat-grid" style={{ marginTop: 18 }}>
-                <Stat label="Balance" value={fmtMoney(quote.balance)} />
-                <Stat label="Interest since" value={fmtDate(quote.interestFrom)} />
-                <Stat label="Interest earned" value={fmtMoney(quote.interest)} />
-                <Stat label="Payable" value={fmtMoney(payable)} />
-              </div>
+          <div className="stat-grid" style={{ marginTop: 18 }}>
+            <Stat label="Balance" value={fmtMoney(q.balance)} />
+            <Stat label="Interest since" value={fmtDate(q.interestFrom)} />
+            <Stat label="Interest earned" value={fmtMoney(q.interest)} />
+            <Stat label="Payable" value={ready ? fmtMoney(payable) : ''} />
+          </div>
 
-              <div className="frm" style={{ marginTop: 18 }}>
-                <Row label="A/c Open Date">
-                  <input value={fmtDate(quote.account.openDate)} readOnly />
-                </Row>
-                <Row label="ROI">
-                  <input value={`${quote.account.interestRate}%`} readOnly />
-                </Row>
+          <div className="frm" style={{ marginTop: 18 }}>
+            <Row label="A/c Open Date">
+              <input value={fmtDate(a.openDate)} readOnly />
+            </Row>
+            <Row label="ROI">
+              <input value={ready ? `${a.interestRate}%` : ''} readOnly />
+            </Row>
 
-                <Row label="Transaction Date">
-                  <input type="date" value={form.transDate} onChange={set('transDate')} />
-                </Row>
-                <Row label="Interest">
-                  <input type="number" step="0.01" value={form.interest} onChange={set('interest')} />
-                </Row>
+            <Row label="Transaction Date">
+              <input type="date" value={form.transDate} onChange={set('transDate')} disabled={!ready} />
+            </Row>
+            <Row label="Interest">
+              <input type="number" step="0.01" value={form.interest} onChange={set('interest')} disabled={!ready} />
+            </Row>
 
-                <Row label="Closure Charges">
-                  <input type="number" step="0.01" value={form.closureCharges} onChange={set('closureCharges')} />
-                </Row>
-                <Row label="Amount payable">
-                  <input value={fmtMoney(payable)} readOnly />
-                </Row>
+            <Row label="Closure Charges">
+              <input
+                type="number"
+                step="0.01"
+                value={form.closureCharges}
+                onChange={set('closureCharges')}
+                disabled={!ready}
+              />
+            </Row>
+            <Row label="Amount payable">
+              <input value={ready ? fmtMoney(payable) : ''} readOnly />
+            </Row>
 
-                <Row label="Mode of Payment">
-                  <select value={form.glCode} onChange={set('glCode')}>
-                    {glAccounts.map((g) => (
-                      <option key={g.code} value={g.code}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </select>
-                </Row>
-                <Row label="Narration">
-                  <input value={form.narration} onChange={set('narration')} />
-                </Row>
-              </div>
-            </>
+            <Row label="Mode of Payment">
+              <select value={form.glCode} onChange={set('glCode')} disabled={!ready}>
+                {glAccounts.map((g) => (
+                  <option key={g.code} value={g.code}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </Row>
+            <Row label="Narration">
+              <input value={form.narration} onChange={set('narration')} disabled={!ready} />
+            </Row>
+          </div>
+
+          {!ready && (
+            <p className="muted" style={{ marginTop: 12 }}>
+              The closure boxes open once an account is found.
+            </p>
           )}
         </div>
 

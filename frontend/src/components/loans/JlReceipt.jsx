@@ -92,6 +92,11 @@ export default function JlReceipt({ navigate, accNo: initialAccNo }) {
     return () => clearTimeout(t)
   }, [loan, amount, rebate, transDate, touched])
 
+  // Drawn before a loan is found, so every field reads through a stand-in.
+  const l = loan || {}
+  const d = dues || {}
+  const ready = !!(loan && dues)
+
   const splitTotal = r2(
     n(split.principal) + n(split.interest) + n(split.penal) + n(split.insurance) + n(split.notice)
   )
@@ -253,25 +258,27 @@ export default function JlReceipt({ navigate, accNo: initialAccNo }) {
             </Row>
           </div>
 
-          {loan && dues && (
+          {(
             <>
               <div className="frm">
-                <Row label="Customer">{loan.customerName} · {loan.custId}</Row>
-                <Row label="Scheme">{loan.schemeCode}</Row>
-                <Row label="Open / Due">{fmtDate(loan.openDate)} — {fmtDate(loan.dueDate)}</Row>
-                <Row label="Rate">{loan.interestRate}% + {loan.penalRate}% penal</Row>
-                <Row label="Interest paid up to">{fmtDate(dues.intFrom)}</Row>
-                <Row label="Interest charged for">{dues.interestMonths} months</Row>
+                <Row label="Customer">{ready ? `${l.customerName} · ${l.custId}` : '—'}</Row>
+                <Row label="Scheme">{l.schemeCode || '—'}</Row>
+                <Row label="Open / Due">
+                  {ready ? `${fmtDate(l.openDate)} — ${fmtDate(l.dueDate)}` : '—'}
+                </Row>
+                <Row label="Rate">{ready ? `${l.interestRate}% + ${l.penalRate}% penal` : '—'}</Row>
+                <Row label="Interest paid up to">{fmtDate(d.intFrom) || '—'}</Row>
+                <Row label="Interest charged for">{ready ? `${d.interestMonths} months` : '—'}</Row>
               </div>
 
-              <Sep>What is owed on {fmtDate(dues.asOn)}</Sep>
+              <Sep>{ready ? `What is owed on ${fmtDate(d.asOn)}` : 'What is owed'}</Sep>
               <div className="stat-grid">
-                <Stat label="Principal" value={fmtMoney(dues.principalDue)} />
-                <Stat label="Interest" value={fmtMoney(dues.interestDue)} />
-                <Stat label="Penal" value={fmtMoney(dues.penalDue)} />
-                <Stat label="Insurance" value={fmtMoney(dues.insuranceDue)} />
-                <Stat label="Notice" value={fmtMoney(dues.noticeDue)} />
-                <Stat label="To close" value={fmtMoney(dues.closingAmount)} />
+                <Stat label="Principal" value={fmtMoney(d.principalDue)} />
+                <Stat label="Interest" value={fmtMoney(d.interestDue)} />
+                <Stat label="Penal" value={fmtMoney(d.penalDue)} />
+                <Stat label="Insurance" value={fmtMoney(d.insuranceDue)} />
+                <Stat label="Notice" value={fmtMoney(d.noticeDue)} />
+                <Stat label="To close" value={fmtMoney(d.closingAmount)} />
               </div>
 
               <Sep>Received</Sep>
@@ -285,7 +292,7 @@ export default function JlReceipt({ navigate, accNo: initialAccNo }) {
                       setAmount(e.target.value)
                       setTouched(false)
                     }}
-                    autoFocus
+                    disabled={!ready}
                   />
                 </Row>
                 <Row label="Interest rebate">
@@ -297,6 +304,7 @@ export default function JlReceipt({ navigate, accNo: initialAccNo }) {
                       setRebate(e.target.value)
                       setTouched(false)
                     }}
+                    disabled={!ready}
                   />
                 </Row>
 
@@ -325,7 +333,7 @@ export default function JlReceipt({ navigate, accNo: initialAccNo }) {
                   <input value={fmtMoney(closing)} readOnly />
                 </Row>
                 <Row label="Received into">
-                  <select value={glCode} onChange={(e) => setGlCode(e.target.value)}>
+                  <select value={glCode} onChange={(e) => setGlCode(e.target.value)} disabled={!ready}>
                     {glAccounts.map((g) => (
                       <option key={g.code} value={g.code}>
                         {g.name}
@@ -336,14 +344,25 @@ export default function JlReceipt({ navigate, accNo: initialAccNo }) {
 
                 <Row label="Pre-closure">
                   <label className="inline-check">
-                    <input type="checkbox" checked={preClosure} onChange={(e) => setPreClosure(e.target.checked)} />
+                    <input
+                      type="checkbox"
+                      checked={preClosure}
+                      onChange={(e) => setPreClosure(e.target.checked)}
+                      disabled={!ready}
+                    />
                     Closed before the due date
                   </label>
                 </Row>
                 <Row label="Narration">
-                  <input value={narration} onChange={(e) => setNarration(e.target.value)} />
+                  <input value={narration} onChange={(e) => setNarration(e.target.value)} disabled={!ready} />
                 </Row>
               </div>
+
+              {!ready && (
+                <p className="muted" style={{ marginTop: 12 }}>
+                  The collection boxes open once a loan is found.
+                </p>
+              )}
 
               {touched && (
                 <p className="muted" style={{ marginTop: 10 }}>

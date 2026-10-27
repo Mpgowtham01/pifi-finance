@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../../api.js'
 import { fmtDate, fmtMoney } from '../../lib/format.js'
+import CustomerPicker from '../CustomerPicker.jsx'
 
 // One deposit in full, the interest payout, the closure and the renewal —
 // FD_Interest_Payment.aspx, FD_Account_Closure.aspx and FD_Renewal.aspx.
@@ -250,9 +251,20 @@ export function FdView({ navigate, id, session }) {
 
 export function FdInterestPayment({ navigate, accNo: initialAccNo }) {
   const [accNo, setAccNo] = useState(initialAccNo || '')
+  const [custId, setCustId] = useState('')
   const [quote, setQuote] = useState(null)
-  const [glAccounts, setGlAccounts] = useState([])
-  const [form, setForm] = useState({ to: today(), transDate: today(), amount: '', tds: '', glCode: '', narration: '' })
+  const [defs, setDefs] = useState(null)
+  const [picking, setPicking] = useState(false)
+  const [form, setForm] = useState({
+    scheme: '',
+    paymentDate: today(),
+    paymentMode: '',
+    transDate: today(),
+    amount: '',
+    tds: '',
+    glCode: '',
+    narration: '',
+  })
   const [error, setError] = useState('')
   const [done, setDone] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -262,35 +274,42 @@ export function FdInterestPayment({ navigate, accNo: initialAccNo }) {
     api
       .get('/deposits/new')
       .then((d) => {
-        setGlAccounts(d.glAccounts)
-        setForm((f) => ({ ...f, glCode: f.glCode || d.glAccounts[0]?.code || '' }))
+        setDefs(d)
+        setForm((f) => ({
+          ...f,
+          glCode: f.glCode || d.glAccounts[0]?.code || '',
+          scheme: f.scheme || d.schemes[0]?.code || '',
+        }))
       })
       .catch(() => {})
   }, [])
 
-  const lookup = useCallback(
-    async (no, to) => {
-      const v = String(no || '').trim()
-      if (!v) return
-      try {
-        const { deposit } = await api.get(`/deposits/lookup/${encodeURIComponent(v)}`)
-        if (deposit.interestRepayment === 'M') {
-          setQuote(null)
-          setError(`${deposit.accNo} pays its interest on maturity, so there is nothing to pay out now.`)
-          return
-        }
-        const q = await api.get(`/deposits/${deposit.id}/interest-quote?asOn=${to}`)
-        setQuote(q)
-        setAccNo(deposit.accNo)
-        setForm((f) => ({ ...f, amount: String(q.interest), tds: String(q.tds) }))
-        setError(deposit.status === 'C' ? 'That deposit is closed.' : '')
-      } catch (e) {
+  const lookup = useCallback(async (no, on) => {
+    const v = String(no || '').trim()
+    if (!v) return
+    try {
+      const { deposit } = await api.get(`/deposits/lookup/${encodeURIComponent(v)}`)
+      if (deposit.interestRepayment === 'M') {
         setQuote(null)
-        setError(e.message)
+        setError(`${deposit.accNo} pays its interest on maturity, so there is nothing to pay out now.`)
+        return
       }
-    },
-    []
-  )
+      const q = await api.get(`/deposits/${deposit.id}/interest-quote?asOn=${on}`)
+      setQuote(q)
+      setAccNo(deposit.accNo)
+      setCustId(deposit.custId)
+      setForm((f) => ({
+        ...f,
+        scheme: deposit.schemeCode || f.scheme,
+        amount: String(q.interest),
+        tds: String(q.tds),
+      }))
+      setError(deposit.status === 'C' ? 'That deposit is closed.' : '')
+    } catch (e) {
+      setQuote(null)
+      setError(e.message)
+    }
+  }, [])
 
   useEffect(() => {
     if (initialAccNo) lookup(initialAccNo, today())
@@ -299,15 +318,19 @@ export function FdInterestPayment({ navigate, accNo: initialAccNo }) {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const payable = r2(n(form.amount) - n(form.tds))
+  const ready = !!quote
 
   async function save(e) {
     e.preventDefault()
-    if (!quote) return
+    if (!quote) {
+      setError('Find the deposit first.')
+      return
+    }
     setBusy(true)
     setError('')
     try {
       const r = await api.post(`/deposits/${quote.deposit.id}/interest-payment`, {
-        to: form.to,
+        to: form.paymentDate,
         transDate: form.transDate,
         amount: n(form.amount),
         tds: n(form.tds),
@@ -366,7 +389,7 @@ export function FdInterestPayment({ navigate, accNo: initialAccNo }) {
           <div>
             <h2>FD Interest Payment</h2>
             <p className="muted">
-              {quote ? `${quote.deposit.accNo} · ${quote.deposit.customerName}` : 'Find the deposit'}
+              {quote ? `${quote.deposit.accNo} · ${quote.deposit.customerName}` : 'Find the deposit by its number or the member'}
             </p>
           </div>
           <div className="master-head-right">
@@ -378,26 +401,62 @@ export function FdInterestPayment({ navigate, accNo: initialAccNo }) {
           {error && <div className="notice error">{error}</div>}
 
           <div className="frm">
-            <Row label="Account No" req>
+            <Row label="Scheme">
+              <select value={form.scheme} onChange={set('scheme')}>
+                {defs?.schemes.map((s) => (
+                  <option key={s.code} value={s.code}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </Row>
+            <Row label="Int. Payment Date">
+              <input
+                type="date"
+                value={form.paymentDate}
+                onChange={(e) => {
+                  set('paymentDate')(e)
+                  if (accNo) lookup(accNo, e.target.value)
+                }}
+              />
+            </Row>
+
+            <Row label="Customer Id">
+              <div className="input-with-btn">
+                <input className="mono" value={custId} onChange={(e) => setCustId(e.target.value)} />
+                <button type="button" className="btn ghost" onClick={() => setPicking(true)}>
+                  Search
+                </button>
+              </div>
+            </Row>
+            <Row label="Account No." req>
               <div className="input-with-btn">
                 <input
                   ref={accRef}
                   className="mono"
                   value={accNo}
                   onChange={(e) => setAccNo(e.target.value)}
-                  onBlur={(e) => lookup(e.target.value, form.to)}
+                  onBlur={(e) => lookup(e.target.value, form.paymentDate)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault()
-                      lookup(accNo, form.to)
+                      lookup(accNo, form.paymentDate)
                     }
                   }}
                   placeholder="201300001"
                 />
-                <button type="button" className="btn ghost" onClick={() => lookup(accNo, form.to)}>
+                <button type="button" className="btn ghost" onClick={() => lookup(accNo, form.paymentDate)}>
                   Go
                 </button>
               </div>
+            </Row>
+
+            <Row label="Int. Payment Mode">
+              <select value={form.paymentMode} onChange={set('paymentMode')}>
+                <option value="">All</option>
+                <option value="1A">Monthly</option>
+                <option value="3A">Quarterly</option>
+              </select>
             </Row>
             <Row label="Customer">
               <input value={quote ? `${quote.deposit.custId} / ${quote.deposit.customerName}` : ''} readOnly />
@@ -405,57 +464,69 @@ export function FdInterestPayment({ navigate, accNo: initialAccNo }) {
           </div>
 
           {quote && (
-            <>
-              <div className="stat-grid" style={{ marginTop: 18 }}>
-                <Stat label="Deposit" value={fmtMoney(quote.deposit.depositAmount)} />
-                <Stat label="Rate" value={`${quote.deposit.interestRate}%`} />
-                <Stat label="Interest due" value={fmtMoney(quote.interest)} />
-                <Stat label="Payable" value={fmtMoney(payable)} />
+            <div className="stat-grid" style={{ marginTop: 18 }}>
+              <Stat label="Deposit" value={fmtMoney(quote.deposit.depositAmount)} />
+              <Stat label="Rate" value={`${quote.deposit.interestRate}%`} />
+              <Stat label="Interest from" value={fmtDate(quote.from)} />
+              <Stat label="Interest due" value={fmtMoney(quote.interest)} />
+            </div>
+          )}
+
+          <Sep>Payment</Sep>
+
+          <div className="frm">
+            <Row label="Transaction Id">
+              <input className="mono w-sm" value={defs?.transId || ''} readOnly tabIndex={-1} />
+            </Row>
+            <Row label="Transaction Date">
+              <input type="date" value={form.transDate} onChange={set('transDate')} disabled={!ready} />
+            </Row>
+
+            <Row label="Transaction Type">
+              <input value="Debit" readOnly />
+            </Row>
+            <Row label="Tot. Interest / TDS">
+              <div className="check-row">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.amount}
+                  onChange={set('amount')}
+                  disabled={!ready}
+                  style={{ maxWidth: 170 }}
+                  placeholder="Interest"
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.tds}
+                  onChange={set('tds')}
+                  disabled={!ready}
+                  style={{ maxWidth: 140 }}
+                  placeholder="TDS"
+                />
+                <span className="muted">payable {fmtMoney(payable)}</span>
               </div>
+            </Row>
 
-              <div className="frm" style={{ marginTop: 18 }}>
-                <Row label="Interest from">
-                  <input value={fmtDate(quote.from)} readOnly />
-                </Row>
-                <Row label="Interest up to">
-                  <input
-                    type="date"
-                    value={form.to}
-                    onChange={(e) => {
-                      set('to')(e)
-                      lookup(accNo, e.target.value)
-                    }}
-                  />
-                </Row>
+            <Row label="Mode of Payment">
+              <select value={form.glCode} onChange={set('glCode')} disabled={!ready}>
+                {defs?.glAccounts.map((g) => (
+                  <option key={g.code} value={g.code}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </Row>
+            <Row label="Narration">
+              <input value={form.narration} onChange={set('narration')} disabled={!ready} />
+            </Row>
+          </div>
 
-                <Row label="Interest" req>
-                  <input type="number" step="0.01" value={form.amount} onChange={set('amount')} />
-                </Row>
-                <Row label="TDS">
-                  <input type="number" step="0.01" value={form.tds} onChange={set('tds')} />
-                </Row>
-
-                <Row label="Payable">
-                  <input value={fmtMoney(payable)} readOnly />
-                </Row>
-                <Row label="Paid through">
-                  <select value={form.glCode} onChange={set('glCode')}>
-                    {glAccounts.map((g) => (
-                      <option key={g.code} value={g.code}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </select>
-                </Row>
-
-                <Row label="Trans. Date">
-                  <input type="date" value={form.transDate} onChange={set('transDate')} />
-                </Row>
-                <Row label="Narration">
-                  <input value={form.narration} onChange={set('narration')} />
-                </Row>
-              </div>
-            </>
+          {!ready && (
+            <p className="muted" style={{ marginTop: 12 }}>
+              The payment boxes open once a deposit is found.
+            </p>
           )}
         </div>
 
@@ -463,11 +534,25 @@ export function FdInterestPayment({ navigate, accNo: initialAccNo }) {
           <button type="button" className="btn ghost" onClick={() => navigate('fd-list')} disabled={busy}>
             Close
           </button>
-          <button className="btn primary" type="submit" disabled={busy || !quote || n(form.amount) <= 0}>
+          <button className="btn primary" type="submit" disabled={busy || !ready || n(form.amount) <= 0}>
             {busy ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>
+
+      {picking && (
+        <CustomerPicker
+          title="Find the depositor"
+          onClose={() => setPicking(false)}
+          onPick={async (c) => {
+            setCustId(c.custId)
+            setPicking(false)
+            // One member may hold several deposits, so the list is the place
+            // to choose between them.
+            navigate('fd-list', { q: c.custId, field: 'custId' })
+          }}
+        />
+      )}
     </form>
   )
 }
@@ -478,6 +563,7 @@ export function FdClosure({ navigate, accNo: initialAccNo }) {
   const [accNo, setAccNo] = useState(initialAccNo || '')
   const [quote, setQuote] = useState(null)
   const [glAccounts, setGlAccounts] = useState([])
+  const [transId, setTransId] = useState('')
   const [form, setForm] = useState({
     transDate: today(), principalPayable: '', interestPayable: '', tds: '', glCode: '', narration: '',
   })
@@ -491,6 +577,7 @@ export function FdClosure({ navigate, accNo: initialAccNo }) {
       .get('/deposits/new')
       .then((d) => {
         setGlAccounts(d.glAccounts)
+        setTransId(d.transId)
         setForm((f) => ({ ...f, glCode: f.glCode || d.glAccounts[0]?.code || '' }))
       })
       .catch(() => {})
@@ -528,11 +615,17 @@ export function FdClosure({ navigate, accNo: initialAccNo }) {
   }, [initialAccNo, lookup])
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
-  const payable = r2(n(form.principalPayable) + n(form.interestPayable) - n(form.tds))
+  // Drawn before a deposit is found, so every field reads through a stand-in.
+  const d = quote?.deposit || {}
+  const ready = !!quote
+  const payable = ready ? r2(n(form.principalPayable) + n(form.interestPayable) - n(form.tds) - n(d.lienAmount)) : 0
 
   async function close(e) {
     e.preventDefault()
-    if (!quote) return
+    if (!quote) {
+      setError('Find the deposit first.')
+      return
+    }
     setBusy(true)
     setError('')
     try {
@@ -587,7 +680,7 @@ export function FdClosure({ navigate, accNo: initialAccNo }) {
           <div>
             <h2>FD Account Closure</h2>
             <p className="muted">
-              {quote ? `${quote.deposit.accNo} · ${quote.deposit.customerName}` : 'Find the deposit to close'}
+              {ready ? `${d.accNo} · ${d.customerName}` : 'Find the deposit to close'}
             </p>
           </div>
           <div className="master-head-right">
@@ -597,9 +690,16 @@ export function FdClosure({ navigate, accNo: initialAccNo }) {
 
         <div className="master-body">
           {error && <div className="notice error">{error}</div>}
+          {ready && quote.premature && (
+            <div className="notice error">
+              This is a premature closure — the deposit matures on {fmtDate(d.maturityDate)}. The interest below
+              is worked out at the card rate for the time it actually ran; change it if the branch applies a
+              penalty.
+            </div>
+          )}
 
           <div className="frm">
-            <Row label="Account No" req>
+            <Row label="Account Number" req>
               <div className="input-with-btn">
                 <input
                   ref={accRef}
@@ -616,79 +716,134 @@ export function FdClosure({ navigate, accNo: initialAccNo }) {
                   placeholder="201300001"
                 />
                 <button type="button" className="btn ghost" onClick={() => lookup(accNo)}>
-                  View Details
+                  Search
                 </button>
               </div>
             </Row>
-            <Row label="Customer">
-              <input value={quote ? `${quote.deposit.custId} / ${quote.deposit.customerName}` : ''} readOnly />
+            <Row label="Effect Date">
+              <input value={fmtDate(d.effectDate)} readOnly />
+            </Row>
+
+            <Row label="Customer Id">
+              <input className="mono" value={d.custId || ''} readOnly />
+            </Row>
+            <Row label="Customer Info">
+              <input value={ready ? `${d.custId} / ${d.customerName}` : ''} readOnly />
+            </Row>
+
+            <Row label="Deposit Amount">
+              <input value={fmtMoney(d.depositAmount)} readOnly />
+            </Row>
+            <Row label=" ">
+              <div className="check-row">
+                <label className="inline-check">
+                  <input type="checkbox" checked={!!d.deductTds} readOnly disabled />
+                  Deduct TDS
+                </label>
+                <label className="inline-check">
+                  <input type="checkbox" checked={!!d.isSeniorCitizen} readOnly disabled />
+                  Senior Citizen
+                </label>
+              </div>
+            </Row>
+
+            <Row label="Period">
+              <input value={ready ? `${d.periodMonths} months` : ''} readOnly />
+            </Row>
+            <Row label="Interest Rate">
+              <input value={ready ? `${d.interestRate}%` : ''} readOnly />
+            </Row>
+
+            <Row label="Maturity Date">
+              <input value={fmtDate(d.maturityDate)} readOnly />
+            </Row>
+            <Row label="Maturity Amount">
+              <input value={fmtMoney(d.maturityAmount)} readOnly />
+            </Row>
+
+            <Row label="Int. Payment Freq.">
+              <input value={ready ? REPAYMENT_LABELS[d.interestRepayment] || d.interestRepayment : ''} readOnly />
+            </Row>
+            <Row label="Int. Paid">
+              <input value={fmtMoney(d.interestPaid)} readOnly />
+            </Row>
+
+            <Row label="Account Status">
+              <input value={ready ? (d.status === 'A' ? 'A-Active' : 'C-Closed') : ''} readOnly />
+            </Row>
+            <Row label="Scheme Code">
+              <input className="mono" value={d.schemeCode || ''} readOnly />
+            </Row>
+
+            <Row label="Lien A/c No.">
+              <input className="mono" value={d.lienAccNo || ''} readOnly />
+            </Row>
+            <Row label="Scheme name">
+              <input value={d.schemeName || ''} readOnly />
             </Row>
           </div>
 
-          {quote && (
-            <>
-              {quote.premature && (
-                <div className="notice error" style={{ marginTop: 14 }}>
-                  This is a premature closure — the deposit matures on {fmtDate(quote.deposit.maturityDate)}.
-                  The interest below is worked out at the card rate for the time it actually ran; change it if
-                  the branch applies a penalty.
-                </div>
-              )}
+          <Sep>Settlement</Sep>
 
-              <div className="stat-grid" style={{ marginTop: 14 }}>
-                <Stat label="Deposit" value={fmtMoney(quote.deposit.depositAmount)} />
-                <Stat label="Interest payable" value={fmtMoney(quote.interestPayable)} />
-                <Stat label="Already paid" value={fmtMoney(quote.interestAlreadyPaid)} />
-                <Stat label="Payable now" value={fmtMoney(payable)} />
+          <div className="frm">
+            <Row label="Transaction Id">
+              <input className="mono w-sm" value={transId} readOnly tabIndex={-1} />
+            </Row>
+            <Row label="Transaction Date">
+              <input type="date" value={form.transDate} onChange={set('transDate')} disabled={!ready} />
+            </Row>
+
+            <Row label="Face Value">
+              <input type="number" step="0.01" value={form.principalPayable} onChange={set('principalPayable')} disabled={!ready} />
+            </Row>
+            <Row label="Int. Payable / TDS">
+              <div className="check-row">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.interestPayable}
+                  onChange={set('interestPayable')}
+                  disabled={!ready}
+                  style={{ maxWidth: 170 }}
+                  placeholder="Interest"
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.tds}
+                  onChange={set('tds')}
+                  disabled={!ready}
+                  style={{ maxWidth: 140 }}
+                  placeholder="TDS"
+                />
               </div>
+            </Row>
 
-              <div className="frm" style={{ marginTop: 18 }}>
-                <Row label="Scheme">
-                  <input value={quote.deposit.schemeName || quote.deposit.schemeCode} readOnly />
-                </Row>
-                <Row label="Period / ROI">
-                  <input value={`${quote.deposit.periodMonths} months · ${quote.deposit.interestRate}%`} readOnly />
-                </Row>
+            <Row label={<>Lien Amount <small>(Prin. + Int.)</small></>}>
+              <input value={d.lienAmount ? fmtMoney(d.lienAmount) : ''} readOnly />
+            </Row>
+            <Row label={<>Net Payable <small>(Transaction Amount)</small></>}>
+              <input value={ready ? fmtMoney(payable) : ''} readOnly />
+            </Row>
 
-                <Row label="Maturity Date">
-                  <input value={fmtDate(quote.deposit.maturityDate)} readOnly />
-                </Row>
-                <Row label="Maturity Amount">
-                  <input value={fmtMoney(quote.deposit.maturityAmount)} readOnly />
-                </Row>
+            <Row label="Mode of Payment">
+              <select value={form.glCode} onChange={set('glCode')} disabled={!ready}>
+                {glAccounts.map((g) => (
+                  <option key={g.code} value={g.code}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </Row>
+            <Row label="Narration">
+              <input value={form.narration} onChange={set('narration')} disabled={!ready} />
+            </Row>
+          </div>
 
-                <Row label="Trans. Date">
-                  <input type="date" value={form.transDate} onChange={set('transDate')} />
-                </Row>
-                <Row label="Principal Payable">
-                  <input type="number" step="0.01" value={form.principalPayable} onChange={set('principalPayable')} />
-                </Row>
-
-                <Row label="Interest Payable">
-                  <input type="number" step="0.01" value={form.interestPayable} onChange={set('interestPayable')} />
-                </Row>
-                <Row label="TDS">
-                  <input type="number" step="0.01" value={form.tds} onChange={set('tds')} />
-                </Row>
-
-                <Row label="Amount Payable">
-                  <input value={fmtMoney(payable)} readOnly />
-                </Row>
-                <Row label="Paid through">
-                  <select value={form.glCode} onChange={set('glCode')}>
-                    {glAccounts.map((g) => (
-                      <option key={g.code} value={g.code}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </select>
-                </Row>
-
-                <Row label="Narration" span={3}>
-                  <input value={form.narration} onChange={set('narration')} />
-                </Row>
-              </div>
-            </>
+          {!ready && (
+            <p className="muted" style={{ marginTop: 12 }}>
+              The settlement boxes open once a deposit is found.
+            </p>
           )}
         </div>
 
@@ -696,7 +851,7 @@ export function FdClosure({ navigate, accNo: initialAccNo }) {
           <button type="button" className="btn ghost" onClick={() => navigate('fd-list')} disabled={busy}>
             Close
           </button>
-          <button className="btn danger" type="submit" disabled={busy || !quote}>
+          <button className="btn danger" type="submit" disabled={busy || !ready}>
             {busy ? 'Closing…' : 'Close the deposit'}
           </button>
         </div>
@@ -763,6 +918,9 @@ export function FdRenewal({ navigate, accNo: initialAccNo }) {
   }, [initialAccNo, lookup])
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+  // Drawn before a deposit is found, so the fields read through a stand-in.
+  const d = quote?.deposit || {}
+  const ready = !!quote
   const renewal = r2(
     n(form.principalPayable) + n(form.interestPayable) - n(form.tds) + n(form.additionalAmount) -
       n(form.withdrawalAmount)
@@ -860,50 +1018,56 @@ export function FdRenewal({ navigate, accNo: initialAccNo }) {
                 </button>
               </div>
             </Row>
+          </div>
+
+          <div className="frm">
             <Row label="Customer">
-              <input value={quote ? `${quote.deposit.custId} / ${quote.deposit.customerName}` : ''} readOnly />
+              <input value={ready ? `${d.custId} / ${d.customerName}` : ''} readOnly />
+            </Row>
+            <Row label="Maturity">
+              <input value={ready ? `${fmtDate(d.maturityDate)} · ${fmtMoney(d.maturityAmount)}` : ''} readOnly />
             </Row>
           </div>
 
-          {quote && (
+          {(
             <>
               <Sep>What comes out of the old one</Sep>
               <div className="frm">
                 <Row label="Principal Payable">
-                  <input type="number" step="0.01" value={form.principalPayable} onChange={set('principalPayable')} />
+                  <input type="number" step="0.01" value={form.principalPayable} onChange={set('principalPayable')} disabled={!ready} />
                 </Row>
                 <Row label="Interest Payable">
-                  <input type="number" step="0.01" value={form.interestPayable} onChange={set('interestPayable')} />
+                  <input type="number" step="0.01" value={form.interestPayable} onChange={set('interestPayable')} disabled={!ready} />
                 </Row>
                 <Row label="TDS">
-                  <input type="number" step="0.01" value={form.tds} onChange={set('tds')} />
+                  <input type="number" step="0.01" value={form.tds} onChange={set('tds')} disabled={!ready} />
                 </Row>
                 <Row label="Trans. Date">
-                  <input type="date" value={form.transDate} onChange={set('transDate')} />
+                  <input type="date" value={form.transDate} onChange={set('transDate')} disabled={!ready} />
                 </Row>
               </div>
 
               <Sep>What goes into the new one</Sep>
               <div className="frm">
                 <Row label="Additional Amount">
-                  <input type="number" step="0.01" value={form.additionalAmount} onChange={set('additionalAmount')} />
+                  <input type="number" step="0.01" value={form.additionalAmount} onChange={set('additionalAmount')} disabled={!ready} />
                 </Row>
                 <Row label="Withdrawal Amount">
-                  <input type="number" step="0.01" value={form.withdrawalAmount} onChange={set('withdrawalAmount')} />
+                  <input type="number" step="0.01" value={form.withdrawalAmount} onChange={set('withdrawalAmount')} disabled={!ready} />
                 </Row>
 
                 <Row label="Renewal Amount">
                   <input value={fmtMoney(renewal)} readOnly />
                 </Row>
                 <Row label="Period (months)">
-                  <input className="w-sm" type="number" value={form.periodMonths} onChange={set('periodMonths')} />
+                  <input className="w-sm" type="number" value={form.periodMonths} onChange={set('periodMonths')} disabled={!ready} />
                 </Row>
 
                 <Row label="Interest Rate %">
-                  <input className="w-sm" type="number" step="0.01" value={form.interestRate} onChange={set('interestRate')} />
+                  <input className="w-sm" type="number" step="0.01" value={form.interestRate} onChange={set('interestRate')} disabled={!ready} />
                 </Row>
                 <Row label="Interest Repayment">
-                  <select value={form.interestRepayment} onChange={set('interestRepayment')}>
+                  <select value={form.interestRepayment} onChange={set('interestRepayment')} disabled={!ready}>
                     <option value="1A">1A-Monthly</option>
                     <option value="3A">3A-Quarterly</option>
                     <option value="M">M-On Maturity</option>
@@ -911,11 +1075,17 @@ export function FdRenewal({ navigate, accNo: initialAccNo }) {
                 </Row>
 
                 <Row label="Narration" span={3}>
-                  <input value={form.narration} onChange={set('narration')} />
+                  <input value={form.narration} onChange={set('narration')} disabled={!ready} />
                 </Row>
               </div>
 
-              {renewal <= 0 && (
+              {!ready && (
+                <p className="muted" style={{ marginTop: 12 }}>
+                  The renewal boxes open once a deposit is found.
+                </p>
+              )}
+
+              {ready && renewal <= 0 && (
                 <p className="notice error" style={{ marginTop: 12 }}>
                   Nothing would be left to put into the new deposit.
                 </p>
