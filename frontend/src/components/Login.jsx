@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.js'
+import { company } from '../company.js'
 
 export default function Login({ onDone }) {
   const [branches, setBranches] = useState([])
@@ -59,8 +60,8 @@ export default function Login({ onDone }) {
     <div className="login-wrap">
       <form className="login-card" onSubmit={submit}>
         <div className="head">
-          <div className="logo">Pi</div>
-          <h1>{needsSetup ? 'Create the owner account' : 'PiFi Finance'}</h1>
+          <img className="logo" src={company.logo} alt="" />
+          <h1>{needsSetup ? 'Create the owner account' : company.name}</h1>
           <p>{needsSetup ? 'This becomes the admin for the whole system.' : 'Sign in to your branch'}</p>
         </div>
         <div className="body">
