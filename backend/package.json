@@ -10,7 +10,13 @@
     "seed": "node src/seed.js",
     "seed-customers": "node src/seed-customers.js",
     "fetch-photos": "node tools/fetch-photos.mjs",
-    "seed-settings": "node src/seed-settings.js"
+    "seed-settings": "node src/seed-settings.js",
+    "seed-loans": "node src/seed-loans.js",
+    "crawl-loans": "node tools/crawl-jewel-loans.mjs",
+    "seed-shares": "node src/seed-shares.js",
+    "crawl-shares": "node tools/crawl-shares.mjs",
+    "seed-savings": "node src/seed-savings.js",
+    "crawl-savings": "node tools/crawl-savings.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
