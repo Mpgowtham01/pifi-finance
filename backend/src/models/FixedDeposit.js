@@ -44,6 +44,10 @@ const fixedDepositSchema = new mongoose.Schema(
     intPaymentMode: { type: String, trim: true, default: 'Cash' },
     // ME = paid on the first of the month, D2D = on the anniversary of the day.
     intPayoutMode: { type: String, trim: true, default: 'D2D' },
+    neftBank: { type: String, trim: true, default: '' },
+    neftBranch: { type: String, trim: true, default: '' },
+    neftIfsc: { type: String, trim: true, default: '', uppercase: true },
+    neftAccNo: { type: String, trim: true, default: '' },
     // What it will be worth at the end, and the interest inside that.
     maturityAmount: { type: Number, default: 0 },
     projectedInterest: { type: Number, default: 0 },

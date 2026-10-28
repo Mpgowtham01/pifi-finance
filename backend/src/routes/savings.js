@@ -12,6 +12,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth.js'
 import { escapeRegex } from '../lib/escapeRegex.js'
 import { httpError } from '../lib/httpError.js'
 import { registerAccountSource } from '../lib/accounts.js'
+import { registerPostingSource, dr, cr, pendingDr, pendingCr } from '../lib/glLedger.js'
 import { round2, at, daysBetween } from '../lib/loanMath.js'
 
 const router = Router()
@@ -670,9 +671,105 @@ router.get('/reports/list', async (req, res) => {
 
 /* ---------------------------------------------- customer enquiry / reports */
 
+/* ----------------------------------------------------------- the day book */
+
+registerPostingSource({
+  source: 'Savings',
+  load: async ({ branchId, from, to, chart }) => {
+    const txns = await SavingsTransaction.find({
+      branch: branchId,
+      ...(from || to
+        ? { transDate: { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) } }
+        : {}),
+    })
+    if (txns.length === 0) return []
+
+    const ids = [...new Set(txns.map((t) => t.account?.toString()).filter(Boolean))]
+    const accounts = await SavingsAccount.find({ _id: { $in: ids } }).select('schemeCode schemeName')
+    const schemeOf = new Map(accounts.map((a) => [a._id.toString(), a.schemeCode]))
+
+    const WORDS = {
+      normal: (t) => (t.type === 'Credit' ? 'Savings Deposit' : 'Savings Withdrawal'),
+      interest: () => 'Savings Interest',
+      closure: () => 'Savings Closure',
+    }
+
+    return txns.map((t) => {
+      const schemeCode = schemeOf.get(t.account?.toString()) || ''
+      const head = chart.schemeGl(schemeCode)
+      const intHead = chart.schemeInterestGl(schemeCode)
+      const postings = []
+      if (t.kind === 'interest') {
+        // Interest credited to the account: no money crosses the counter, the
+        // branch simply owes the depositor more than it did.
+        postings.push(
+          intHead
+            ? dr(intHead, t.amount, 'Interest allowed')
+            : pendingDr('sb.interest', t.amount, 'Interest allowed')
+        )
+        postings.push(cr(head, t.amount, 'Credited to the account'))
+      } else if (t.type === 'Credit') {
+        postings.push(t.glCode ? dr(t.glCode, t.amount, 'Received') : pendingDr('mop.unknown', t.amount, 'Received'))
+        postings.push(cr(head, t.amount, 'Deposit'))
+      } else {
+        postings.push(dr(head, t.amount, 'Withdrawal'))
+        postings.push(t.glCode ? cr(t.glCode, t.amount, 'Paid out') : pendingCr('mop.unknown', t.amount, 'Paid out'))
+      }
+      return {
+        transId: t.transId,
+        date: t.transDate,
+        particulars: `${(WORDS[t.kind] || WORDS.normal)(t)} - ${t.accNo} - ${t.customerName}`,
+        amount: t.amount,
+        accNo: t.accNo,
+        custId: t.custId,
+        customerName: t.customerName,
+        kind: t.kind,
+        refId: t._id.toString(),
+        status: t.status,
+        createdBy: t.createdBy?.toString() || '',
+        postings,
+      }
+    })
+  },
+})
+
 registerAccountSource({
   accType: 'Savings',
   schemeType: 'SD',
+  osType: 'SD',
+  outstanding: async ({ branchId, asOn }) => {
+    const accounts = await SavingsAccount.find({
+      branch: branchId,
+      openDate: { $lte: asOn },
+      $or: [{ status: 'A' }, { closedDate: { $gt: asOn } }, { closedDate: null }],
+    }).sort({ accNo: 1 })
+    const rows = []
+    for (const acc of accounts) {
+      const balance = await balanceAsOn(acc, asOn)
+      if (balance <= 0) continue
+      rows.push({
+        accNo: acc.accNo,
+        custId: acc.custId,
+        customerName: acc.customerName,
+        scheme: acc.schemeName || acc.schemeCode,
+        openDate: acc.openDate,
+        balance,
+      })
+    }
+    return rows
+  },
+  lookup: async ({ branchId }, accNo) => {
+    const a = await SavingsAccount.findOne({ branch: branchId, accNo })
+    if (!a) return null
+    return {
+      accNo: a.accNo,
+      custId: a.custId,
+      customerName: a.customerName,
+      scheme: a.schemeName || a.schemeCode,
+      balance: a.balance,
+      status: a.status === 'C' ? 'Closed' : 'Active',
+    }
+  },
   load: async ({ branchId, customer }) => {
     const rows = await SavingsAccount.find({ branch: branchId, customer: customer._id }).sort({ openDate: -1 })
     return rows.map((a) => ({

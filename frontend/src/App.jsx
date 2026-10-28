@@ -40,6 +40,19 @@ import ShareTransferScreen from './components/shares/ShareTransfer.jsx'
 import {
   ShareView, ShareCertificate, ShareAllotmentReport, ShareStatement,
 } from './components/shares/ShareScreens.jsx'
+import VoucherEntry from './components/vouchers/VoucherEntry.jsx'
+import {
+  ViewTransactions,
+  CashBook,
+  SubDayBook,
+  DayBook,
+  GeneralLedger,
+  TrialBalance,
+  AdminOutstanding,
+  Statement,
+  DayEnd,
+  FormNdh3,
+} from './components/admin/AdminScreens.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import {
   ScheduleMaster, GlMaster, SchemeMaster, InterestSlabMaster, JewelDescription,
@@ -269,6 +282,40 @@ export default function App() {
             accNo={route.params.accNo}
           />
         )
+      case 'vch-journal':
+        return <VoucherEntry key="JNL" navigate={navigate} kind="JNL" />
+      case 'vch-payment':
+        return <VoucherEntry key="VP" navigate={navigate} kind="VP" />
+      case 'vch-receipt':
+        return <VoucherEntry key="VR" navigate={navigate} kind="VR" />
+
+      case 'adm-transactions':
+        return <ViewTransactions navigate={navigate} />
+      case 'adm-cash-book':
+        return <CashBook navigate={navigate} />
+      case 'adm-sub-day-book':
+        return <SubDayBook navigate={navigate} />
+      case 'adm-day-book':
+        return <DayBook navigate={navigate} />
+      case 'adm-gl':
+        return <GeneralLedger navigate={navigate} />
+      case 'adm-trial-balance':
+        return <TrialBalance navigate={navigate} />
+      case 'adm-os':
+        return <AdminOutstanding navigate={navigate} />
+      case 'adm-balance-sheet':
+        return <Statement key="BS" navigate={navigate} kind="BS" />
+      case 'adm-profit-loss':
+        return <Statement key="PL" navigate={navigate} kind="PL" />
+      // Month End is Interest Provision — the same screen the old app's Month
+      // End link opened, kept inside the Admin group it is reached from.
+      case 'adm-month-end':
+        return <InterestProvision session={session} navigate={navigate} />
+      case 'adm-day-end':
+        return <DayEnd navigate={navigate} session={session} />
+      case 'adm-ndh3':
+        return <FormNdh3 navigate={navigate} />
+
       case 'soon':
         return (
           <ComingSoon

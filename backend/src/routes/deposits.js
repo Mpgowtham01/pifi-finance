@@ -13,6 +13,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth.js'
 import { escapeRegex } from '../lib/escapeRegex.js'
 import { httpError } from '../lib/httpError.js'
 import { registerAccountSource } from '../lib/accounts.js'
+import { registerPostingSource, dr, cr, pendingDr, pendingCr } from '../lib/glLedger.js'
 import { round2, at, addMonths, daysBetween } from '../lib/loanMath.js'
 
 const router = Router()
@@ -226,6 +227,10 @@ async function openDeposit(req, b, { renewedFrom = '' } = {}) {
     interestRepayment,
     intPaymentMode: b.intPaymentMode || 'Cash',
     intPayoutMode: b.intPayoutMode || 'D2D',
+    neftBank: b.neftBank || '',
+    neftBranch: b.neftBranch || '',
+    neftIfsc: b.neftIfsc || '',
+    neftAccNo: b.neftAccNo || '',
     maturityAmount: paidOut ? depositAmount : grown.maturity,
     projectedInterest: paidOut ? round2((depositAmount * rate * periodMonths) / 1200) : grown.interest,
     interestUpto: undefined,
@@ -301,7 +306,8 @@ router.put('/:id', requireAdmin, async (req, res) => {
     throw httpError(409, 'Interest has been paid on this deposit, so its terms can no longer be edited.')
   }
   const b = req.body || {}
-  for (const f of ['schemeCode', 'oldAccNo', 'intPaymentMode', 'intPayoutMode', 'referredBy', 'glCode', 'narration']) {
+  for (const f of ['schemeCode', 'oldAccNo', 'intPaymentMode', 'intPayoutMode', 'referredBy', 'glCode',
+    'neftBank', 'neftBranch', 'neftIfsc', 'neftAccNo', 'narration']) {
     if (b[f] !== undefined) fd[f] = b[f]
   }
   if (b.mop !== undefined && MOP.includes(b.mop)) fd.mop = b.mop
@@ -789,9 +795,115 @@ router.get('/:id/statement', async (req, res) => {
 
 /* ---------------------------------------------- customer enquiry / reports */
 
+/* ----------------------------------------------------------- the day book */
+
+registerPostingSource({
+  source: 'Term Deposit',
+  load: async ({ branchId, from, to, chart }) => {
+    const txns = await DepositTransaction.find({
+      branch: branchId,
+      ...(from || to
+        ? { transDate: { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) } }
+        : {}),
+    })
+    if (txns.length === 0) return []
+
+    const ids = [...new Set(txns.map((t) => t.deposit?.toString()).filter(Boolean))]
+    const deposits = await FixedDeposit.find({ _id: { $in: ids } }).select('schemeCode depositAmount')
+    const byId = new Map(deposits.map((d) => [d._id.toString(), d]))
+
+    const WORDS = {
+      opening: 'Deposit Received',
+      interest: 'Deposit Interest',
+      closure: 'Deposit Closed',
+      renewal: 'Deposit Renewed',
+    }
+
+    return txns.map((t) => {
+      const deposit = byId.get(t.deposit?.toString())
+      const head = chart.schemeGl(deposit?.schemeCode)
+      const intHead = chart.schemeInterestGl(deposit?.schemeCode)
+      const tds = round2(t.tds)
+      const postings = []
+
+      if (t.kind === 'opening') {
+        postings.push(t.glCode ? dr(t.glCode, t.amount, 'Received') : pendingDr('mop.unknown', t.amount, 'Received'))
+        postings.push(cr(head, t.amount, 'Deposit'))
+      } else if (t.kind === 'interest') {
+        // The amount stored is the gross interest; TDS is held back out of it.
+        const paid = round2(t.amount - tds)
+        postings.push(
+          intHead ? dr(intHead, t.amount, 'Interest paid') : pendingDr('fd.interest', t.amount, 'Interest paid')
+        )
+        postings.push(t.glCode ? cr(t.glCode, paid, 'Paid out') : pendingCr('mop.unknown', paid, 'Paid out'))
+        if (tds > 0) postings.push(pendingCr('fd.tds', tds, 'TDS withheld'))
+      } else if (t.kind === 'closure') {
+        // The settlement is the face value plus whatever interest had run,
+        // less TDS. The face value is what the deposit itself says.
+        const principal = Math.min(round2(t.amount + tds), round2(deposit?.depositAmount || t.amount + tds))
+        const interest = round2(t.amount + tds - principal)
+        postings.push(dr(head, principal, 'Deposit repaid'))
+        if (interest > 0) {
+          postings.push(
+            intHead ? dr(intHead, interest, 'Interest paid') : pendingDr('fd.interest', interest, 'Interest paid')
+          )
+        }
+        postings.push(t.glCode ? cr(t.glCode, t.amount, 'Paid out') : pendingCr('mop.unknown', t.amount, 'Paid out'))
+        if (tds > 0) postings.push(pendingCr('fd.tds', tds, 'TDS withheld'))
+      }
+      // A renewal moves nothing across the counter — the old deposit closes
+      // and the new one opens, each with its own entry — so it carries no
+      // postings of its own and shows in the transaction list alone.
+
+      return {
+        transId: t.transId,
+        date: t.transDate,
+        particulars: `${WORDS[t.kind] || 'Deposit'} - ${t.accNo} - ${t.customerName}`,
+        amount: t.amount,
+        accNo: t.accNo,
+        custId: t.custId,
+        customerName: t.customerName,
+        kind: t.kind,
+        refId: t._id.toString(),
+        status: t.status,
+        createdBy: t.createdBy?.toString() || '',
+        postings,
+      }
+    })
+  },
+})
+
 registerAccountSource({
   accType: 'Fixed Deposit',
   schemeType: 'SD',
+  osType: 'FD',
+  outstanding: async ({ branchId, asOn }) => {
+    const rows = await FixedDeposit.find({
+      branch: branchId,
+      openDate: { $lte: asOn },
+      $or: [{ status: 'A' }, { closedDate: { $gt: asOn } }, { closedDate: null }],
+    }).sort({ accNo: 1 })
+    return rows.map((d) => ({
+      accNo: d.accNo,
+      custId: d.custId,
+      customerName: d.customerName,
+      scheme: d.schemeName || d.schemeCode,
+      openDate: d.openDate,
+      balance: d.depositAmount,
+    }))
+  },
+  lookup: async ({ branchId }, accNo) => {
+    const d = await FixedDeposit.findOne({ branch: branchId, accNo })
+    if (!d) return null
+    return {
+      accNo: d.accNo,
+      custId: d.custId,
+      customerName: d.customerName,
+      scheme: d.schemeName || d.schemeCode,
+      balance: d.status === 'C' ? 0 : d.depositAmount,
+      status: d.status === 'C' ? 'Closed' : 'Active',
+    }
+  },
   load: async ({ branchId, customer }) => {
     const rows = await FixedDeposit.find({ branch: branchId, customer: customer._id }).sort({ openDate: -1 })
     return rows.map((d) => ({

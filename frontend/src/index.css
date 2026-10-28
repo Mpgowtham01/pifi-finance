@@ -197,6 +197,7 @@ button.crumb:focus-visible { outline: 2px solid var(--primary); outline-offset: 
 .card .card-body { padding: 18px; }
 
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
 .stat {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow-sm);

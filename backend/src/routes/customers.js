@@ -13,7 +13,6 @@ router.use(requireAuth)
 // Starting customer id per branch, mirroring the old "10100130"-style numbers.
 const CUST_ID_START = 10100001
 // Photos are resized in the browser before upload; this is a backstop.
-const MAX_IMAGE_BYTES = 600 * 1024
 
 /* ------------------------------------------------------------------ list */
 
@@ -119,8 +118,9 @@ router.get('/:id/accounts', async (req, res) => {
   res.json({ accounts, accountTypes: registeredAccountTypes() })
 })
 
-router.get('/:id/photo', (req, res) => sendImage(req, res, 'photo'))
-router.get('/:id/jewel-photo', (req, res) => sendImage(req, res, 'jewelPhoto'))
+router.get('/:id/photo', (req, res) => sendImage(Customer, req, res, 'photo'))
+router.get('/:id/jewel-photo', (req, res) => sendImage(Customer, req, res, 'jewelPhoto'))
+router.get('/:id/signature', (req, res) => sendImage(Customer, req, res, 'signature'))
 
 /* --------------------------------------------------------------- writing */
 
@@ -140,7 +140,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const images = pickImages(req.body)
   const unset = {}
-  for (const k of ['photo', 'jewelPhoto']) {
+  for (const k of ['photo', 'jewelPhoto', 'signature']) {
     if (images[k] === null) {
       delete images[k]
       unset[k] = ''
@@ -197,15 +197,6 @@ async function findOne(req) {
   return c
 }
 
-async function sendImage(req, res, field) {
-  const c = await Customer.findOne({ _id: req.params.id, branch: req.branchId }).select(`+${field}`)
-  const img = c?.[field]
-  if (!img?.data) throw httpError(404, 'No image on file.')
-  res.set('Content-Type', img.contentType || 'image/jpeg')
-  res.set('Cache-Control', 'private, max-age=60')
-  res.send(img.data)
-}
-
 function summary(c) {
   return {
     id: c._id.toString(),
@@ -221,25 +212,14 @@ function summary(c) {
   }
 }
 
-// Turn a browser data URL into the stored image, or null to clear it.
-// `undefined` means "the client did not mention this field" - leave it alone.
-function parseImage(v) {
-  if (v === undefined) return undefined
-  if (!v) return null
-  const m = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(v))
-  if (!m) throw httpError(400, 'That image could not be read. Use a PNG or JPEG.')
-  const data = Buffer.from(m[2], 'base64')
-  if (data.length > MAX_IMAGE_BYTES) throw httpError(413, 'That image is too large - keep it under 600 KB.')
-  return { data, contentType: m[1] }
-}
-
 function pickImages(b = {}) {
   const out = {}
-  for (const field of ['photo', 'jewelPhoto']) {
+  const HAS = { photo: 'hasPhoto', jewelPhoto: 'hasJewelPhoto', signature: 'hasSignature' }
+  for (const field of Object.keys(HAS)) {
     const img = parseImage(b[field])
     if (img === undefined) continue
     out[field] = img
-    out[field === 'photo' ? 'hasPhoto' : 'hasJewelPhoto'] = !!img
+    out[HAS[field]] = !!img
   }
   return out
 }

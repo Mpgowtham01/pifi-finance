@@ -34,8 +34,6 @@ const MENU = [
     key: 'customer', label: 'Customer', ico: '👤',
     children: [
       { label: 'Customer List', route: 'customers' },
-      { label: 'Customer Master', route: 'customer-new' },
-      { label: 'Customer Enquiry', route: 'customer-enquiry' },
       { label: "List of A/c's for Customer", route: 'customer-reports' },
     ],
   },
@@ -87,26 +85,36 @@ const MENU = [
       { label: 'Account Statement', route: 'jl-statement' },
       { label: 'JL Repledge', route: 'jl-repledge' },
       { label: 'JL Repledge Closure', route: 'jl-repledge-close' },
-      { label: 'New Jewel Loan', route: 'jl-new' },
     ],
   },
   {
     key: 'vouchers', label: 'Vouchers', ico: '🧾',
+    // One screen in the old app — Journal.aspx, told apart by its PT query
+    // string — so one screen here too.
     children: [
-      { label: 'Journal', soon: 'Journal Voucher' },
-      { label: 'Payment Voucher', soon: 'Payment Voucher' },
-      { label: 'Receipt Voucher', soon: 'Receipt Voucher' },
+      { label: 'Voucher Receipt', route: 'vch-receipt' },
+      { label: 'Voucher Payment', route: 'vch-payment' },
+      { label: 'Journal', route: 'vch-journal' },
     ],
   },
   {
     key: 'admin', label: 'Admin', ico: '🏛️',
+    // The twelve entries of the old Admin side menu, in its order. Three of
+    // them pointed at pages that live under another module there too, so they
+    // point at the same screens here.
     children: [
-      { label: 'View Transactions', soon: 'View Transactions' },
-      { label: 'Cash Book Reports', soon: 'Cash Book Reports' },
-      { label: 'Reminders', soon: 'Reminders' },
-      { label: 'SMS Reminder', soon: 'SMS Reminder' },
-      { label: 'Circulars', soon: 'Circulars' },
-      { label: 'Messages', soon: 'Messages' },
+      { label: 'General Ledger', route: 'adm-gl' },
+      { label: 'Cash Book', route: 'adm-cash-book' },
+      { label: 'Sub Day Book', route: 'adm-sub-day-book' },
+      { label: 'Outstanding Report', route: 'adm-os' },
+      { label: 'Receipts & Payments', route: 'adm-day-book' },
+      { label: 'Balance Sheet', route: 'adm-balance-sheet' },
+      { label: 'Profit / Loss', route: 'adm-profit-loss' },
+      { label: 'Trial Balance', route: 'adm-trial-balance' },
+      { label: 'Form NDH3', route: 'adm-ndh3' },
+      { label: 'Day End', route: 'adm-day-end' },
+      { label: 'Month End', route: 'adm-month-end' },
+      { label: 'Verify Transaction', route: 'adm-transactions' },
     ],
   },
   { key: 'dashboard', label: 'Dashboard', ico: '▦', route: 'dashboard' },
@@ -123,6 +131,8 @@ function ownerOf(route) {
   if (name.startsWith('share-')) return 'share'
   if (name.startsWith('sb-')) return 'savings'
   if (name.startsWith('fd-')) return 'term'
+  if (name.startsWith('vch-')) return 'vouchers'
+  if (name.startsWith('adm-')) return 'admin'
   if (name.startsWith('set-')) return 'settings'
   if (name === 'dashboard') return 'dashboard'
   return null
@@ -151,6 +161,13 @@ const OPENED_FROM = {
 }
 
 const ALL_TITLES = {
+  'adm-transactions': 'View Transactions',
+  'adm-os': 'Outstanding Report',
+  'adm-month-end': 'Month End',
+  'adm-balance-sheet': 'Balance Sheet',
+  'adm-profit-loss': 'Profit / Loss',
+  'adm-day-end': 'Day End',
+  'adm-ndh3': 'Form NDH3',
   customers: 'Customer List',
   'customer-new': 'Customer Master',
   'customer-edit': 'Customer Master',
@@ -226,7 +243,7 @@ export default function Layout({ session, route, navigate, onLogout, onSwitchBra
   })
   const owner = ownerOf(route)
   // One group at a time, the way the old accordion menu behaved.
-  const [openGroup, setOpenGroup] = useState(owner || 'customer')
+  const [openGroup, setOpenGroup] = useState(owner)
   const { user, branch, branches } = session
 
   useEffect(() => {

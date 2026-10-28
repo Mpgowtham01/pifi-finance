@@ -14,6 +14,8 @@ import { requireAuth, requireAdmin } from '../middleware/auth.js'
 import { escapeRegex } from '../lib/escapeRegex.js'
 import { httpError } from '../lib/httpError.js'
 import { registerAccountSource } from '../lib/accounts.js'
+import { parseImage, sendImage } from '../lib/image.js'
+import { registerPostingSource, dr, cr, pendingDr, pendingCr } from '../lib/glLedger.js'
 import {
   duesFor, appropriate, addMonths, round2, perGramFromSovereign, at, daysBetween,
 } from '../lib/loanMath.js'
@@ -162,8 +164,11 @@ router.post('/jewel', async (req, res) => {
     num(b.appraiserFee) + num(b.serviceTax) + num(b.formsFee) + num(b.insurance) + num(b.otherDeductions)
   )
 
+  const jewelPhoto = parseImage(b.photo)
+
   const loan = await JewelLoan.create({
     branch: req.branchId,
+    ...(jewelPhoto ? { photo: jewelPhoto, hasPhoto: true } : {}),
     accNo: `${branch.code}${seq}`,
     oldAccNo: b.oldAccNo || '',
     transId: String(transSeq),
@@ -246,6 +251,8 @@ router.get('/jewel/:id/dues', async (req, res) => {
   res.json({ dues, split: appropriate(amount, dues, { rebate }), suggested: dues.closingAmount })
 })
 
+router.get('/jewel/:id/photo', (req, res) => sendImage(JewelLoan, req, res, 'photo'))
+
 router.put('/jewel/:id', requireAdmin, async (req, res) => {
   const loan = await findLoan(req)
   const paid = await LoanReceipt.countDocuments({ loan: loan._id, status: 'A' })
@@ -263,6 +270,16 @@ router.put('/jewel/:id', requireAdmin, async (req, res) => {
     'insurancePerMonth', 'appraiserFee', 'serviceTax', 'formsFee', 'disbAmt', 'loanPayable',
   ]
   for (const f of numbers) if (b[f] !== undefined) loan[f] = num(b[f])
+  const photo = parseImage(b.photo)
+  if (photo !== undefined) {
+    if (photo) {
+      loan.photo = photo
+      loan.hasPhoto = true
+    } else {
+      loan.set('photo', undefined)
+      loan.hasPhoto = false
+    }
+  }
   if (b.openDate) loan.openDate = asDate(b.openDate)
   if (b.periodMonths !== undefined) loan.periodMonths = num(b.periodMonths, loan.periodMonths)
   loan.dueDate = asDate(b.dueDate) || addMonths(loan.openDate, loan.periodMonths)
@@ -869,6 +886,8 @@ router.post('/repledge/:id/close', requireAdmin, async (req, res) => {
   doc.principalBalance = round2(doc.principalBalance - doc.principalPaid)
   doc.closedDate = closedDate
   doc.status = 'C'
+  if (b.glCodeCr !== undefined) doc.glCodeCr = String(b.glCodeCr || '')
+  if (b.glCodeDr !== undefined) doc.glCodeDr = String(b.glCodeDr || '')
   doc.narration = b.narration || doc.narration
   await doc.save()
   // The jewels are back in our strong room.
@@ -880,9 +899,139 @@ router.post('/repledge/:id/close', requireAdmin, async (req, res) => {
 
 // Jewel loans show up in the customer's account list and in the reports built
 // on it, without either of them knowing this module exists.
+/* ----------------------------------------------------------- the day book */
+
+// A pledge paid out, and every receipt taken against one. The books we took
+// over carry the receipt split but never recorded which till the money went
+// through, so the cash leg of that history comes back as unrecorded rather
+// than guessed at.
+registerPostingSource({
+  source: 'Jewel Loan',
+  load: async ({ branchId, from, to, chart }) => {
+    const window = (field) =>
+      from || to ? { [field]: { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) } } : {}
+
+    const [loans, receipts] = await Promise.all([
+      JewelLoan.find({ branch: branchId, ...window('openDate') }),
+      LoanReceipt.find({ branch: branchId, ...window('transDate') }),
+    ])
+
+    // A receipt knows its loan but not the scheme the loan was opened under,
+    // and the scheme is what names the ledger head.
+    const schemeOf = new Map(loans.map((l) => [l._id.toString(), l.schemeCode]))
+    const missing = [...new Set(receipts.map((r) => r.loan?.toString()).filter((id) => id && !schemeOf.has(id)))]
+    if (missing.length) {
+      const more = await JewelLoan.find({ _id: { $in: missing } }).select('schemeCode')
+      for (const l of more) schemeOf.set(l._id.toString(), l.schemeCode)
+    }
+
+    const entries = []
+
+    for (const l of loans) {
+      const head = chart.schemeGl(l.schemeCode)
+      const postings = [dr(head, l.loanAmount, `${l.schemeName || l.schemeCode} pledge`)]
+      postings.push(
+        l.glCode ? cr(l.glCode, l.disbAmt, 'Paid out') : pendingCr('mop.unknown', l.disbAmt, 'Paid out')
+      )
+      if (round2(l.deductions) > 0) postings.push(pendingCr('jl.deductions', l.deductions, 'Held back'))
+      entries.push({
+        transId: l.transId,
+        date: l.openDate,
+        particulars: `New Jewel Loan - ${l.accNo} - ${l.customerName}`,
+        amount: l.loanAmount,
+        accNo: l.accNo,
+        custId: l.custId,
+        customerName: l.customerName,
+        kind: 'disbursal',
+        refId: l._id.toString(),
+        status: 'A',
+        createdBy: l.createdBy?.toString() || '',
+        postings,
+      })
+    }
+
+    for (const r of receipts) {
+      const schemeCode = schemeOf.get(r.loan?.toString()) || ''
+      const head = chart.schemeGl(schemeCode)
+      const intHead = chart.schemeInterestGl(schemeCode)
+      const postings = [
+        r.glCode ? dr(r.glCode, r.amount, 'Received') : pendingDr('mop.unknown', r.amount, 'Received'),
+      ]
+      if (round2(r.rebate) > 0) postings.push(pendingDr('jl.rebate', r.rebate, 'Interest waived'))
+      if (round2(r.principal) > 0) postings.push(cr(head, r.principal, 'Principal'))
+      if (round2(r.interest) > 0) {
+        postings.push(
+          intHead ? cr(intHead, r.interest, 'Interest') : pendingCr('jl.interest', r.interest, 'Interest')
+        )
+      }
+      if (round2(r.penal) > 0) postings.push(pendingCr('jl.penal', r.penal, 'Penal interest'))
+      if (round2(r.insurance) > 0) postings.push(pendingCr('jl.insurance', r.insurance, 'Insurance'))
+      if (round2(r.notice) > 0) postings.push(pendingCr('jl.notice', r.notice, 'Notice charges'))
+      entries.push({
+        transId: r.transId,
+        date: r.transDate,
+        particulars: `JL Receipt - ${r.accNo} - ${r.customerName}`,
+        amount: r.amount,
+        accNo: r.accNo,
+        custId: r.custId,
+        customerName: r.customerName,
+        kind: r.closedLoan ? 'closure' : 'receipt',
+        refId: r._id.toString(),
+        status: r.status,
+        createdBy: r.createdBy?.toString() || '',
+        postings,
+      })
+    }
+
+    return entries
+  },
+})
+
 registerAccountSource({
   accType: 'Jewel Loan',
   schemeType: 'JL',
+  osType: 'JL',
+  outstanding: async ({ branchId, asOn }) => {
+    const loans = await JewelLoan.find({
+      branch: branchId,
+      openDate: { $lte: asOn },
+      $or: [{ status: 'A' }, { closedDate: { $gt: asOn } }, { closedDate: null }],
+    }).sort({ accNo: 1 })
+    // Anything repaid after that day has to go back on.
+    const later = await LoanReceipt.find({
+      branch: branchId,
+      status: 'A',
+      loan: { $in: loans.map((l) => l._id) },
+      transDate: { $gt: asOn },
+    })
+    const paidBack = new Map()
+    for (const r of later) {
+      const k = r.loan.toString()
+      paidBack.set(k, round2((paidBack.get(k) || 0) + r.principal))
+    }
+    return loans
+      .map((l) => ({
+        accNo: l.accNo,
+        custId: l.custId,
+        customerName: l.customerName,
+        scheme: l.schemeName || l.schemeCode,
+        openDate: l.openDate,
+        balance: round2(l.principalBalance + (paidBack.get(l._id.toString()) || 0)),
+      }))
+      .filter((r) => r.balance > 0)
+  },
+  lookup: async ({ branchId }, accNo) => {
+    const l = await JewelLoan.findOne({ branch: branchId, accNo })
+    if (!l) return null
+    return {
+      accNo: l.accNo,
+      custId: l.custId,
+      customerName: l.customerName,
+      scheme: l.schemeName || l.schemeCode,
+      balance: l.principalBalance,
+      status: l.status === 'C' ? 'Closed' : 'Active',
+    }
+  },
   load: async ({ branchId, customer }) => {
     const loans = await JewelLoan.find({ branch: branchId, customer: customer._id }).sort({ openDate: -1 })
     return loans.map((l) => ({

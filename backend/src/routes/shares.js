@@ -11,6 +11,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth.js'
 import { escapeRegex } from '../lib/escapeRegex.js'
 import { httpError } from '../lib/httpError.js'
 import { registerAccountSource } from '../lib/accounts.js'
+import { registerPostingSource, dr, cr, pendingDr, pendingCr } from '../lib/glLedger.js'
 import { round2, at } from '../lib/loanMath.js'
 
 const router = Router()
@@ -406,9 +407,97 @@ function sumOut(transfers, acc) {
 
 /* ---------------------------------------------- customer enquiry / reports */
 
+/* ----------------------------------------------------------- the day book */
+
+registerPostingSource({
+  source: 'Share',
+  load: async ({ branchId, from, to, chart }) => {
+    const window = (field) =>
+      from || to ? { [field]: { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) } } : {}
+
+    const [issues, transfers] = await Promise.all([
+      ShareAccount.find({ branch: branchId, ...window('date') }),
+      ShareTransfer.find({ branch: branchId, ...window('transDate') }),
+    ])
+
+    const entries = issues.map((s) => {
+      const head = chart.schemeGl(s.schemeCode)
+      const fees = round2(s.entranceFees)
+      const taken = round2(s.shareAmount + fees)
+      const postings = [s.glCode ? dr(s.glCode, taken, 'Received') : pendingDr('mop.unknown', taken, 'Received')]
+      postings.push(cr(head, s.shareAmount, 'Share capital'))
+      if (fees > 0) postings.push(pendingCr('share.entrance', fees, 'Entrance fees'))
+      return {
+        transId: s.transId,
+        date: s.date,
+        particulars: `Share Allotment - ${s.accNo} - ${s.customerName}`,
+        amount: taken,
+        accNo: s.accNo,
+        custId: s.custId,
+        customerName: s.customerName,
+        kind: 'allotment',
+        refId: s._id.toString(),
+        status: s.status === 'C' ? 'closed' : 'A',
+        createdBy: s.createdBy?.toString() || '',
+        postings,
+      }
+    })
+
+    // A transfer moves a run of share numbers between two members. The share
+    // capital is unchanged and no money crosses the counter, so it belongs in
+    // the transaction list without a posting of its own.
+    for (const t of transfers) {
+      entries.push({
+        transId: t.transId,
+        date: t.transDate,
+        particulars: `Share Transfer - ${t.fromAccNo} to ${t.toAccNo || '—'} - ${t.noOfShares} shares`,
+        amount: t.shareAmount,
+        accNo: t.fromAccNo,
+        custId: t.fromCustId,
+        customerName: t.fromCustomerName,
+        kind: 'transfer',
+        refId: t._id.toString(),
+        status: 'A',
+        createdBy: t.createdBy?.toString() || '',
+        postings: [],
+      })
+    }
+
+    return entries
+  },
+})
+
 registerAccountSource({
   accType: 'Share',
   schemeType: 'OTH',
+  osType: 'SC',
+  outstanding: async ({ branchId, asOn }) => {
+    const rows = await ShareAccount.find({
+      branch: branchId,
+      date: { $lte: asOn },
+      status: 'A',
+    }).sort({ accNo: 1 })
+    return rows.map((s) => ({
+      accNo: s.accNo,
+      custId: s.custId,
+      customerName: s.customerName,
+      scheme: s.schemeName || s.schemeCode,
+      openDate: s.date,
+      balance: s.shareAmount,
+    }))
+  },
+  lookup: async ({ branchId }, accNo) => {
+    const s = await ShareAccount.findOne({ branch: branchId, accNo })
+    if (!s) return null
+    return {
+      accNo: s.accNo,
+      custId: s.custId,
+      customerName: s.customerName,
+      scheme: s.schemeName || s.schemeCode,
+      balance: s.shareAmount,
+      status: s.status === 'C' ? 'Closed' : 'Active',
+    }
+  },
   load: async ({ branchId, customer }) => {
     const rows = await ShareAccount.find({ branch: branchId, customer: customer._id }).sort({ date: -1 })
     return rows.map((s) => ({

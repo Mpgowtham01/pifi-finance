@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { imageSchema } from '../lib/image.js'
 
 // Field model mirrors the old Customer_Master.aspx (see reference-pifi/ANALYSIS.md
 // in the sibling repo), modernised: one database, scoped by `branch`.
@@ -12,12 +13,8 @@ const idProofSchema = new mongoose.Schema(
   { _id: false }
 )
 
-// The photo and the pledged-jewel photo live in the document itself (both are
-// are never sent with a normal read — they are served by their own endpoints.
-const imageSchema = new mongoose.Schema(
-  { data: Buffer, contentType: { type: String, default: 'image/jpeg' } },
-  { _id: false }
-)
+// The photo, the specimen signature and the pledged-jewel photo live in the
+// document itself and are served by their own endpoints — see lib/image.js.
 
 const customerSchema = new mongoose.Schema(
   {
@@ -70,8 +67,10 @@ const customerSchema = new mongoose.Schema(
 
     photo: { type: imageSchema, select: false },
     jewelPhoto: { type: imageSchema, select: false },
+    signature: { type: imageSchema, select: false },
     hasPhoto: { type: Boolean, default: false },
     hasJewelPhoto: { type: Boolean, default: false },
+    hasSignature: { type: Boolean, default: false },
     remarks: { type: String, trim: true, default: '' },
 
     active: { type: Boolean, default: true },
@@ -94,6 +93,7 @@ customerSchema.methods.toJSONSafe = function () {
   delete o.__v
   delete o.photo
   delete o.jewelPhoto
+  delete o.signature
   return o
 }
 

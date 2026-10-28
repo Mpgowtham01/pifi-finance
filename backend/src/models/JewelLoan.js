@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { imageSchema } from '../lib/image.js'
 
 // A pledge. The old JL_Master.aspx let the clerk add jewels one at a time into
 // a grid and totalled them, so the items live here as a sub-document list
@@ -80,6 +81,9 @@ const jewelLoanSchema = new mongoose.Schema(
       age: Number,
     },
     isStaff: { type: Boolean, default: false },
+    // A photo of the jewels as they were taken in, served by its own endpoint.
+    photo: { type: imageSchema, select: false },
+    hasPhoto: { type: Boolean, default: false },
     narration: { type: String, trim: true, default: '' },
 
     // Running state. Receipts move these, so the receipt screen never has to
