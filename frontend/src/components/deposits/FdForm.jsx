@@ -325,7 +325,7 @@ export default function FdForm({ navigate, id }) {
             <Row label="Interest Rate %" req>
               <input className="w-sm" type="number" step="0.01" value={form.interestRate} onChange={set('interestRate')} required />
             </Row>
-            <Row label="Interest Repayment">
+            <Row label="Int. payment freq">
               <select value={form.interestRepayment} onChange={set('interestRepayment')}>
                 {(defs?.repayments || Object.keys(REPAYMENT_LABELS)).map((r) => (
                   <option key={r} value={r}>
@@ -345,7 +345,7 @@ export default function FdForm({ navigate, id }) {
               </select>
               {paysOut && <small className="muted">Interest taken out cannot compound.</small>}
             </Row>
-            <Row label="Int. Payout Mode">
+            <Row label="Interest Payment">
               <select value={form.intPayoutMode} onChange={set('intPayoutMode')}>
                 <option value="ME">1st day of Month</option>
                 <option value="D2D">Date to Date</option>
@@ -359,7 +359,7 @@ export default function FdForm({ navigate, id }) {
                 <option>Transfer</option>
               </select>
             </Row>
-            <Row label="Received through">
+            <Row label="Mode of Receipt">
               <select value={form.glCode} onChange={set('glCode')}>
                 {defs?.glAccounts.map((g) => (
                   <option key={g.code} value={g.code}>
@@ -421,7 +421,7 @@ export default function FdForm({ navigate, id }) {
               <input value={form.nomineeRelation} onChange={set('nomineeRelation')} />
             </Row>
 
-            <Row label="Nominee DOB">
+            <Row label="DOB, if minor">
               <input type="date" value={form.nomineeDob} onChange={setNomineeDob} />
             </Row>
             <Row label="Nominee Age">

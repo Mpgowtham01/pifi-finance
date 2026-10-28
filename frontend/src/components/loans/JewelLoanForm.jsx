@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../api.js'
+import ImageBox, { shrink } from '../ImageBox.jsx'
 import { dateInput, fmtDate, fmtMoney } from '../../lib/format.js'
 import CustomerPicker from '../CustomerPicker.jsx'
 
@@ -39,6 +40,8 @@ export default function JewelLoanForm({ navigate, id }) {
   const [picking, setPicking] = useState(false)
 
   const [accNo, setAccNo] = useState('')
+  const [status, setStatus] = useState('A')
+  const [photo, setPhoto] = useState({ src: '', dirty: false })
   const [transId, setTransId] = useState('')
   const [customer, setCustomer] = useState(null) // { custId, name, ... }
   const [custIdInput, setCustIdInput] = useState('')
@@ -85,6 +88,8 @@ export default function JewelLoanForm({ navigate, id }) {
           if (dead) return
           setAccNo(loan.accNo)
           setTransId(loan.transId)
+          setStatus(loan.status || 'A')
+          if (loan.hasPhoto) setPhoto({ src: `/api/loans/jewel/${id}/photo`, dirty: false })
           setCustomer({ custId: loan.custId, name: loan.customerName })
           setCustIdInput(loan.custId)
           setJewels(
@@ -225,6 +230,7 @@ export default function JewelLoanForm({ navigate, id }) {
         loanPayable: n(form.loanAmount),
         nominee: { name: form.nomineeName, relation: form.nomineeRelation, age: form.nomineeAge },
       }
+      if (photo.dirty) body.photo = photo.src || ''
       const res = editing ? await api.put(`/loans/jewel/${id}`, body) : await api.post('/loans/jewel', body)
       setOk(`Loan ${res.loan.accNo} saved.`)
       navigate('jl-view', { id: res.loan.id })
@@ -263,6 +269,13 @@ export default function JewelLoanForm({ navigate, id }) {
             </Row>
             <Row label="Trans. Id">
               <input className="mono w-sm" value={transId} readOnly tabIndex={-1} />
+            </Row>
+
+            <Row label="Account Status">
+              <input value={status === 'C' ? 'C-Closed' : 'A-Active'} readOnly tabIndex={-1} />
+            </Row>
+            <Row label=" ">
+              <span className="muted">A loan closes when it is paid off, not from this screen.</span>
             </Row>
 
             <Row label="Customer Id" req>
@@ -459,6 +472,29 @@ export default function JewelLoanForm({ navigate, id }) {
             </table>
           </div>
 
+          <div className="frm-sep">
+            <span>Jewel Photo</span>
+          </div>
+          <aside className="master-media">
+            <ImageBox
+              label="Jewel Photo"
+              state={photo}
+              shape="wide"
+              onPick={async (e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ''
+                if (!file) return
+                try {
+                  setPhoto({ src: await shrink(file), dirty: true })
+                  setError('')
+                } catch (err) {
+                  setError(err.message)
+                }
+              }}
+              onClear={() => setPhoto({ src: '', dirty: true })}
+            />
+          </aside>
+
           <Sep>Loan</Sep>
 
           <div className="frm">
@@ -476,7 +512,7 @@ export default function JewelLoanForm({ navigate, id }) {
               <input className="w-sm" type="number" step="0.01" value={form.penalRate} onChange={set('penalRate')} />
             </Row>
 
-            <Row label="Appraiser Fee">
+            <Row label="Processing Fee">
               <input type="number" step="0.01" value={form.appraiserFee} onChange={set('appraiserFee')} />
             </Row>
             <Row label="Service Tax">

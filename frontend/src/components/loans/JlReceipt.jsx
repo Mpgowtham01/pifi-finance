@@ -17,6 +17,7 @@ export default function JlReceipt({ navigate, accNo: initialAccNo }) {
   const [loan, setLoan] = useState(null)
   const [dues, setDues] = useState(null)
   const [glAccounts, setGlAccounts] = useState([])
+  const [transId, setTransId] = useState('')
 
   const [transDate, setTransDate] = useState(today())
   const [amount, setAmount] = useState('')
@@ -37,6 +38,7 @@ export default function JlReceipt({ navigate, accNo: initialAccNo }) {
       .get('/loans/jewel/new')
       .then((d) => {
         setGlAccounts(d.glAccounts)
+        setTransId(d.transId)
         setGlCode((c) => c || d.glAccounts[0]?.code || '')
       })
       .catch(() => {})
@@ -262,13 +264,17 @@ export default function JlReceipt({ navigate, accNo: initialAccNo }) {
             <>
               <div className="frm">
                 <Row label="Customer">{ready ? `${l.customerName} · ${l.custId}` : '—'}</Row>
-                <Row label="Scheme">{l.schemeCode || '—'}</Row>
-                <Row label="Open / Due">
-                  {ready ? `${fmtDate(l.openDate)} — ${fmtDate(l.dueDate)}` : '—'}
-                </Row>
-                <Row label="Rate">{ready ? `${l.interestRate}% + ${l.penalRate}% penal` : '—'}</Row>
-                <Row label="Interest paid up to">{fmtDate(d.intFrom) || '—'}</Row>
+                <Row label="Scheme Code">{l.schemeCode || '—'}</Row>
+                <Row label="Acc. Open Date">{fmtDate(l.openDate) || '—'}</Row>
+                <Row label="Due Date">{fmtDate(l.dueDate) || '—'}</Row>
+                <Row label="Loan Amount">{ready ? fmtMoney(l.loanAmount) : '—'}</Row>
+                <Row label="Interest Rate">{ready ? `${l.interestRate}%` : '—'}</Row>
+                <Row label="Penal Rate">{ready ? `${l.penalRate}%` : '—'}</Row>
+                <Row label="Account Status">{ready ? (l.status === 'C' ? 'C-Closed' : 'A-Active') : '—'}</Row>
+                <Row label="Int. From">{fmtDate(d.intFrom) || '—'}</Row>
+                <Row label="Int. Upto">{fmtDate(d.asOn) || '—'}</Row>
                 <Row label="Interest charged for">{ready ? `${d.interestMonths} months` : '—'}</Row>
+                <Row label="Transaction Id"><span className="mono">{transId || '—'}</span></Row>
               </div>
 
               <Sep>{ready ? `What is owed on ${fmtDate(d.asOn)}` : 'What is owed'}</Sep>
@@ -283,7 +289,8 @@ export default function JlReceipt({ navigate, accNo: initialAccNo }) {
 
               <Sep>Received</Sep>
               <div className="frm">
-                <Row label="Amount" req>
+                <Row label="Transaction Type">Receipt</Row>
+                <Row label="Trans. Amount" req>
                   <input
                     type="number"
                     step="0.01"

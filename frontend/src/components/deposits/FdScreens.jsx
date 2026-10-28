@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../../api.js'
-import { fmtDate, fmtMoney } from '../../lib/format.js'
+import { dateInput, fmtDate, fmtMoney } from '../../lib/format.js'
 import CustomerPicker from '../CustomerPicker.jsx'
+
+// How the old screens spelled the mode of operation out.
+const MOP_LABELS = { S: 'S-Single', E: 'E-EorS', F: 'F-ForS', A: 'A-AorS', J: 'Joint', M: 'M-Minor' }
 
 // One deposit in full, the interest payout, the closure and the renewal —
 // FD_Interest_Payment.aspx, FD_Account_Closure.aspx and FD_Renewal.aspx.
@@ -866,10 +869,18 @@ export function FdRenewal({ navigate, accNo: initialAccNo }) {
   const [accNo, setAccNo] = useState(initialAccNo || '')
   const [quote, setQuote] = useState(null)
   const [defs, setDefs] = useState(null)
+  const [transId, setTransId] = useState('')
   const [form, setForm] = useState({
     transDate: today(), principalPayable: '', interestPayable: '', tds: '',
     additionalAmount: '', withdrawalAmount: '',
     periodMonths: '12', interestRate: '', interestRepayment: '', narration: '',
+    // The new deposit's own terms, which the old screen let the clerk change
+    // before the money went in.
+    mop: 'S', effectDate: '', compounding: 'N', intPaymentMode: 'Cash', intPayoutMode: 'D2D',
+    glCode: '', minorName: '', minorDob: '',
+    nomineeName: '', nomineeRelation: '', nomineeAge: '', nomineeDob: '',
+    referredBy: '',
+    neftBank: '', neftBranch: '', neftIfsc: '', neftAccNo: '',
   })
   const [error, setError] = useState('')
   const [done, setDone] = useState(null)
@@ -879,7 +890,10 @@ export function FdRenewal({ navigate, accNo: initialAccNo }) {
   useEffect(() => {
     api
       .get('/deposits/new')
-      .then(setDefs)
+      .then((d) => {
+        setDefs(d)
+        setTransId(d.transId)
+      })
       .catch(() => {})
   }, [])
 
@@ -904,6 +918,25 @@ export function FdRenewal({ navigate, accNo: initialAccNo }) {
         periodMonths: String(deposit.periodMonths),
         interestRate: String(deposit.interestRate),
         interestRepayment: deposit.interestRepayment,
+        // The new deposit carries the old one's terms forward unless they are
+        // changed here, the way the old screen behaved.
+        mop: deposit.mop || 'S',
+        effectDate: f.effectDate || f.transDate,
+        compounding: deposit.compounding || 'N',
+        intPaymentMode: deposit.intPaymentMode || 'Cash',
+        intPayoutMode: deposit.intPayoutMode || 'D2D',
+        glCode: deposit.glCode || '',
+        minorName: deposit.minor?.name || '',
+        minorDob: dateInput(deposit.minor?.dob),
+        nomineeName: deposit.nominee?.name || '',
+        nomineeRelation: deposit.nominee?.relation || '',
+        nomineeAge: deposit.nominee?.age != null ? String(deposit.nominee.age) : '',
+        nomineeDob: dateInput(deposit.nominee?.dob),
+        referredBy: deposit.referredBy || '',
+        neftBank: deposit.neftBank || '',
+        neftBranch: deposit.neftBranch || '',
+        neftIfsc: deposit.neftIfsc || '',
+        neftAccNo: deposit.neftAccNo || '',
       }))
       setError('')
     } catch (e) {
@@ -942,6 +975,24 @@ export function FdRenewal({ navigate, accNo: initialAccNo }) {
         periodMonths: n(form.periodMonths),
         interestRate: n(form.interestRate),
         interestRepayment: form.interestRepayment,
+        mop: form.mop,
+        effectDate: form.effectDate || form.transDate,
+        compounding: form.compounding,
+        intPaymentMode: form.intPaymentMode,
+        intPayoutMode: form.intPayoutMode,
+        glCode: form.glCode,
+        minor: { name: form.minorName, dob: form.minorDob || null },
+        nominee: {
+          name: form.nomineeName,
+          relation: form.nomineeRelation,
+          age: form.nomineeAge,
+          dob: form.nomineeDob || null,
+        },
+        referredBy: form.referredBy,
+        neftBank: form.neftBank,
+        neftBranch: form.neftBranch,
+        neftIfsc: form.neftIfsc,
+        neftAccNo: form.neftAccNo,
         narration: form.narration,
       })
       setDone(r)
@@ -1003,7 +1054,7 @@ export function FdRenewal({ navigate, accNo: initialAccNo }) {
           {error && <div className="notice error">{error}</div>}
 
           <div className="frm">
-            <Row label="Account No" req>
+            <Row label="Deposit A/c No." req>
               <div className="input-with-btn">
                 <input
                   ref={accRef}
@@ -1036,13 +1087,32 @@ export function FdRenewal({ navigate, accNo: initialAccNo }) {
                 <Row label="Principal Payable">
                   <input type="number" step="0.01" value={form.principalPayable} onChange={set('principalPayable')} disabled={!ready} />
                 </Row>
-                <Row label="Interest Payable">
-                  <input type="number" step="0.01" value={form.interestPayable} onChange={set('interestPayable')} disabled={!ready} />
+                <Row label="Int. Payable/TDS">
+                  <div className="check-row">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.interestPayable}
+                      onChange={set('interestPayable')}
+                      disabled={!ready}
+                      style={{ maxWidth: 170 }}
+                      placeholder="Interest"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.tds}
+                      onChange={set('tds')}
+                      disabled={!ready}
+                      style={{ maxWidth: 140 }}
+                      placeholder="TDS"
+                    />
+                  </div>
                 </Row>
-                <Row label="TDS">
-                  <input type="number" step="0.01" value={form.tds} onChange={set('tds')} disabled={!ready} />
+                <Row label="Transaction Id">
+                  <input className="mono w-sm" value={transId} readOnly tabIndex={-1} />
                 </Row>
-                <Row label="Trans. Date">
+                <Row label="Transaction Date">
                   <input type="date" value={form.transDate} onChange={set('transDate')} disabled={!ready} />
                 </Row>
               </div>
@@ -1066,7 +1136,7 @@ export function FdRenewal({ navigate, accNo: initialAccNo }) {
                 <Row label="Interest Rate %">
                   <input className="w-sm" type="number" step="0.01" value={form.interestRate} onChange={set('interestRate')} disabled={!ready} />
                 </Row>
-                <Row label="Interest Repayment">
+                <Row label="Int. payment freq">
                   <select value={form.interestRepayment} onChange={set('interestRepayment')} disabled={!ready}>
                     <option value="1A">1A-Monthly</option>
                     <option value="3A">3A-Quarterly</option>
@@ -1074,10 +1144,125 @@ export function FdRenewal({ navigate, accNo: initialAccNo }) {
                   </select>
                 </Row>
 
+                <Row label="Deposit Amount">
+                  <input value={fmtMoney(renewal)} readOnly />
+                </Row>
+                <Row label="Effect Date">
+                  <input type="date" value={form.effectDate} onChange={set('effectDate')} disabled={!ready} />
+                </Row>
+
+                <Row label="Customer Id">
+                  <input className="mono" value={d.custId || ''} readOnly tabIndex={-1} />
+                </Row>
+                <Row label="Acc. Open Date">
+                  <input value={fmtDate(d.openDate)} readOnly tabIndex={-1} />
+                </Row>
+
+                <Row label="Mode of Operation">
+                  <select value={form.mop} onChange={set('mop')} disabled={!ready}>
+                    {(defs?.mops || ['S', 'E', 'F', 'A', 'J', 'M']).map((m) => (
+                      <option key={m} value={m}>
+                        {MOP_LABELS[m] || m}
+                      </option>
+                    ))}
+                  </select>
+                </Row>
+                <Row label="Compounding">
+                  <select value={form.compounding} onChange={set('compounding')} disabled={!ready}>
+                    <option value="N">N-None</option>
+                    <option value="M">M-Monthly</option>
+                    <option value="Q">Q-Quarterly</option>
+                    <option value="H">H-Half-yearly</option>
+                    <option value="Y">Y-Yearly</option>
+                  </select>
+                </Row>
+
+                <Row label="Int. Payment Mode">
+                  <select value={form.intPaymentMode} onChange={set('intPaymentMode')} disabled={!ready}>
+                    <option>Cash</option>
+                    <option>Transfer</option>
+                    <option>NEFT</option>
+                  </select>
+                </Row>
+                <Row label="Interest Payment">
+                  <select value={form.intPayoutMode} onChange={set('intPayoutMode')} disabled={!ready}>
+                    <option value="D2D">D2D-Due to due</option>
+                    <option value="MON">MON-Month end</option>
+                  </select>
+                </Row>
+
+                <Row label="Mode">
+                  <select value={form.glCode} onChange={set('glCode')} disabled={!ready}>
+                    <option value="">Select</option>
+                    {(defs?.glAccounts || []).map((g) => (
+                      <option key={g.code} value={g.code}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
+                </Row>
+                <Row label="Referred By">
+                  <input value={form.referredBy} onChange={set('referredBy')} disabled={!ready} />
+                </Row>
+
+                <Row label="Minor Name">
+                  <input value={form.minorName} onChange={set('minorName')} disabled={!ready} />
+                </Row>
+                <Row label="Minor DOB">
+                  <input type="date" value={form.minorDob} onChange={set('minorDob')} disabled={!ready} />
+                </Row>
+
+                <Row label="Nominee Name">
+                  <input value={form.nomineeName} onChange={set('nomineeName')} disabled={!ready} />
+                </Row>
+                <Row label="Relationship">
+                  <input value={form.nomineeRelation} onChange={set('nomineeRelation')} disabled={!ready} />
+                </Row>
+
+                <Row label="Nominee Age">
+                  <input
+                    className="w-sm"
+                    type="number"
+                    value={form.nomineeAge}
+                    onChange={set('nomineeAge')}
+                    disabled={!ready}
+                  />
+                </Row>
+                <Row label="DOB, if minor">
+                  <input type="date" value={form.nomineeDob} onChange={set('nomineeDob')} disabled={!ready} />
+                </Row>
+
                 <Row label="Narration" span={3}>
                   <input value={form.narration} onChange={set('narration')} disabled={!ready} />
                 </Row>
               </div>
+
+              {form.intPaymentMode === 'NEFT' && (
+                <>
+                  <Sep>Where the interest is sent</Sep>
+                  <div className="frm">
+                    <Row label="Bank Name">
+                      <input value={form.neftBank} onChange={set('neftBank')} disabled={!ready} />
+                    </Row>
+                    <Row label="Branch">
+                      <input value={form.neftBranch} onChange={set('neftBranch')} disabled={!ready} />
+                    </Row>
+
+                    <Row label="IFSC Code">
+                      <input
+                        className="mono w-md"
+                        value={form.neftIfsc}
+                        onChange={(e) => setForm((f) => ({ ...f, neftIfsc: e.target.value.toUpperCase() }))}
+                        maxLength={11}
+                        disabled={!ready}
+                      />
+                    </Row>
+                    <Row label="Account Number">
+                      <input className="mono" value={form.neftAccNo} onChange={set('neftAccNo')} disabled={!ready} />
+                    </Row>
+                  </div>
+                </>
+              )}
 
               {!ready && (
                 <p className="muted" style={{ marginTop: 12 }}>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '../api.js'
 import { ageFrom, dateInput, fmtDate } from '../lib/format.js'
 import CustomerPicker from './CustomerPicker.jsx'
+import ImageBox, { shrink } from './ImageBox.jsx'
 
 // Customer_Master.aspx rebuilt: the same compact label-left, two-column sheet,
 // the same field order, the same option lists — restyled. The data has to stay
@@ -45,6 +46,7 @@ export default function CustomerForm({ navigate, id }) {
   const [form, setForm] = useState(blank)
   const [custId, setCustId] = useState('')
   const [photo, setPhoto] = useState({ src: '', dirty: false })
+  const [signature, setSignature] = useState({ src: '', dirty: false })
   const [jewelPhoto, setJewelPhoto] = useState({ src: '', dirty: false })
   const [error, setError] = useState('')
   const [ok, setOk] = useState('')
@@ -81,6 +83,7 @@ export default function CustomerForm({ navigate, id }) {
         })
         if (customer.hasPhoto) setPhoto({ src: `/api/customers/${id}/photo`, dirty: false })
         if (customer.hasJewelPhoto) setJewelPhoto({ src: `/api/customers/${id}/jewel-photo`, dirty: false })
+        if (customer.hasSignature) setSignature({ src: `/api/customers/${id}/signature`, dirty: false })
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
@@ -165,6 +168,7 @@ export default function CustomerForm({ navigate, id }) {
         },
       }
       if (photo.dirty) payload.photo = photo.src || ''
+      if (signature.dirty) payload.signature = signature.src || ''
       if (jewelPhoto.dirty) payload.jewelPhoto = jewelPhoto.src || ''
 
       if (editing) {
@@ -279,6 +283,13 @@ export default function CustomerForm({ navigate, id }) {
                 onClear={() => setPhoto({ src: '', dirty: true })}
               />
               <ImageBox
+                label="Signature"
+                state={signature}
+                shape="wide"
+                onPick={(e) => onImage(e, setSignature)}
+                onClear={() => setSignature({ src: '', dirty: true })}
+              />
+              <ImageBox
                 label="Jewel Photo"
                 state={jewelPhoto}
                 shape="wide"
@@ -363,6 +374,13 @@ export default function CustomerForm({ navigate, id }) {
             <Row label="Id Proof No.">
               <input value={form.idProofs[1].number} onChange={setProof(1, 'number')} />
             </Row>
+            <Row label="Issue Date">
+              <input type="date" value={form.idProofs[0].issueDate} onChange={setProof(0, 'issueDate')} />
+            </Row>
+            <Row label="Issue Place">
+              <input value={form.idProofs[0].issuePlace} onChange={setProof(0, 'issuePlace')} />
+            </Row>
+
             <Row label="PAN No.">
               <input
                 className="mono w-md"
@@ -489,57 +507,5 @@ function Sep({ children }) {
   )
 }
 
-function ImageBox({ label, state, onPick, onClear, shape }) {
-  return (
-    <div className={`image-box ${shape}`}>
-      <span className="image-label">{label}</span>
-      <label className="image-frame" title={`Upload ${label.toLowerCase()}`}>
-        {state.src ? (
-          <img src={state.src} alt={label} />
-        ) : (
-          <span className="image-empty">
-            <span className="image-plus">+</span>
-            Add {label.toLowerCase()}
-          </span>
-        )}
-        <input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={onPick} />
-      </label>
-      {state.src && (
-        <button type="button" className="btn tiny ghost" onClick={onClear}>
-          Remove
-        </button>
-      )}
-    </div>
-  )
-}
-
 const digits = (v, max) => String(v).replace(/\D/g, '').slice(0, max)
 
-// Scale an uploaded image down before it ever leaves the browser, so photos
-// stay small enough to live beside the customer record.
-function shrink(file, maxSide = 640, quality = 0.82) {
-  return new Promise((resolve, reject) => {
-    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
-      return reject(new Error('Pick a PNG, JPEG or WebP image.'))
-    }
-    const reader = new FileReader()
-    reader.onerror = () => reject(new Error('That file could not be read.'))
-    reader.onload = () => {
-      const img = new Image()
-      img.onerror = () => reject(new Error('That file is not a readable image.'))
-      img.onload = () => {
-        const scale = Math.min(1, maxSide / Math.max(img.width, img.height))
-        const canvas = document.createElement('canvas')
-        canvas.width = Math.max(1, Math.round(img.width * scale))
-        canvas.height = Math.max(1, Math.round(img.height * scale))
-        const ctx = canvas.getContext('2d')
-        ctx.fillStyle = '#fff'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-        resolve(canvas.toDataURL('image/jpeg', quality))
-      }
-      img.src = reader.result
-    }
-    reader.readAsDataURL(file)
-  })
-}

@@ -16,17 +16,29 @@ export default function ShareTransferScreen({ navigate, accNo: initialAccNo }) {
   const [accNo, setAccNo] = useState(initialAccNo || '')
   const [from, setFrom] = useState(null) // the holding being transferred out of
   const [toCustomer, setToCustomer] = useState(null)
+  // The holding the shares land in. A member who holds none yet gets one
+  // opened on save, which is what the old screen left blank until then.
+  const [toAccNo, setToAccNo] = useState('')
   const [toCustId, setToCustId] = useState('')
   const [picking, setPicking] = useState(false)
 
   const [count, setCount] = useState('')
   const [transDate, setTransDate] = useState(today())
+  const [transId, setTransId] = useState('')
   const [nominee, setNominee] = useState('')
   const [narration, setNarration] = useState('')
 
   const [error, setError] = useState('')
   const [done, setDone] = useState(null)
   const [busy, setBusy] = useState(false)
+
+  // The transaction number this transfer will take.
+  useEffect(() => {
+    api
+      .get('/shares/new')
+      .then((d) => setTransId(d.transId))
+      .catch(() => {})
+  }, [])
   const accRef = useRef(null)
 
   useEffect(() => {
@@ -55,6 +67,8 @@ export default function ShareTransferScreen({ navigate, accNo: initialAccNo }) {
     if (!v) return
     try {
       const { customer } = await api.get(`/customers/lookup/${encodeURIComponent(v)}`)
+      const { accounts } = await api.get(`/customers/${customer.id}/accounts`)
+      setToAccNo(accounts.find((a) => a.accType === 'Share' && a.status === 'Active')?.accNo || '')
       setToCustomer(customer)
       setToCustId(customer.custId)
       setError('')
@@ -166,7 +180,7 @@ export default function ShareTransferScreen({ navigate, accNo: initialAccNo }) {
 
           <Sep>From</Sep>
           <div className="frm">
-            <Row label="Account No" req>
+            <Row label="From Account" req>
               <div className="input-with-btn">
                 <input
                   ref={accRef}
@@ -208,6 +222,14 @@ export default function ShareTransferScreen({ navigate, accNo: initialAccNo }) {
 
           <Sep>To</Sep>
           <div className="frm">
+            <Row label="To Account">
+              <input
+                className="mono"
+                value={toCustomer ? toAccNo || 'A new holding will be opened' : ''}
+                readOnly
+                tabIndex={-1}
+              />
+            </Row>
             <Row label="Customer Id" req>
               <div className="input-with-btn">
                 <input
@@ -247,6 +269,9 @@ export default function ShareTransferScreen({ navigate, accNo: initialAccNo }) {
               <input className="mono" value={moving > 0 ? distTo : ''} readOnly />
             </Row>
 
+            <Row label="Transaction Id">
+              <input className="mono w-sm" value={transId} readOnly tabIndex={-1} />
+            </Row>
             <Row label="Transaction Date">
               <input type="date" value={transDate} onChange={(e) => setTransDate(e.target.value)} />
             </Row>

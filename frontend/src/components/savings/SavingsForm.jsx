@@ -32,6 +32,7 @@ export default function SavingsForm({ navigate, id }) {
   const [custIdInput, setCustIdInput] = useState('')
   // The three further holders the old form allowed, as typed.
   const [joints, setJoints] = useState(['', '', ''])
+  const [status, setStatus] = useState('A')
   const [jointNames, setJointNames] = useState(['', '', ''])
 
   const [form, setForm] = useState({
@@ -62,6 +63,7 @@ export default function SavingsForm({ navigate, id }) {
           const { account } = await api.get(`/savings/${id}`)
           if (dead) return
           setAccNo(account.accNo)
+          setStatus(account.status || 'A')
           setCustomer({ custId: account.custId, name: account.customerName })
           setCustIdInput(account.custId)
           setJoints([account.jointCustIds?.[0] || '', account.jointCustIds?.[1] || '', account.jointCustIds?.[2] || ''])
@@ -240,6 +242,9 @@ export default function SavingsForm({ navigate, id }) {
               </select>
             </Row>
 
+            <Row label="Account Status">
+              <input value={status === 'C' ? 'C-Closed' : 'A-Active'} readOnly tabIndex={-1} />
+            </Row>
             <Row label="Interest Rate %">
               <input className="w-sm" type="number" step="0.01" value={form.interestRate} onChange={set('interestRate')} />
             </Row>

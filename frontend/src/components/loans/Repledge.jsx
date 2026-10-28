@@ -79,6 +79,8 @@ export function RepledgeList({ navigate, session }) {
                 <th style={{ width: 130 }}>Bank A/c No</th>
                 <th style={{ width: 100 }}>Open Date</th>
                 <th style={{ width: 100 }}>Due Date</th>
+                <th style={{ width: 60 }} className="right-align">Period</th>
+                <th style={{ width: 70 }} className="right-align">ROI</th>
                 <th style={{ width: 80 }} className="right-align">Pledges</th>
                 <th style={{ width: 90 }} className="right-align">Net (g)</th>
                 <th style={{ width: 120 }} className="right-align">Borrowed</th>
@@ -89,7 +91,7 @@ export function RepledgeList({ navigate, session }) {
             <tbody>
               {!loading && rows.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="muted" style={{ padding: 26, textAlign: 'center' }}>
+                  <td colSpan={12} className="muted" style={{ padding: 26, textAlign: 'center' }}>
                     No re-pledges yet.
                   </td>
                 </tr>
@@ -101,6 +103,8 @@ export function RepledgeList({ navigate, session }) {
                   <td className="mono">{r.bankAccNo || '—'}</td>
                   <td>{fmtDate(r.openDate)}</td>
                   <td>{fmtDate(r.dueDate)}</td>
+                  <td className="right-align">{r.periodMonths}</td>
+                  <td className="right-align">{r.interestRate}</td>
                   <td className="right-align">{r.loans.length}</td>
                   <td className="right-align">{r.netWeight}</td>
                   <td className="right-align">{fmtMoney(r.loanAmount)}</td>
@@ -245,10 +249,27 @@ function NewRepledge({ onClose, onDone }) {
 
 export function RepledgeClosure({ navigate, id, accNo: initialAccNo }) {
   const [data, setData] = useState(null)
+  const [glAccounts, setGlAccounts] = useState([])
+  const [transId, setTransId] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [accNo, setAccNo] = useState(initialAccNo || '')
-  const [form, setForm] = useState({ transDate: today(), principalPayable: '', interestPayable: '', narration: '' })
+  const [form, setForm] = useState({
+    transDate: today(), principalPayable: '', interestPayable: '', glCodeCr: '', glCodeDr: '', narration: '',
+  })
+
+  // The chart of accounts and the next transaction number, from the same
+  // place the loan screens take them.
+  useEffect(() => {
+    api
+      .get('/loans/jewel/new')
+      .then((d) => {
+        setGlAccounts(d.glAccounts)
+        setTransId(d.transId)
+        setForm((f) => ({ ...f, glCodeCr: f.glCodeCr || d.glAccounts[0]?.code || '' }))
+      })
+      .catch(() => {})
+  }, [])
 
   const openQuote = useCallback(async (repledgeId) => {
     try {
@@ -361,13 +382,19 @@ export function RepledgeClosure({ navigate, id, accNo: initialAccNo }) {
                 </button>
               </div>
             </Row>
-            <Row label="Bank">
+            <Row label="Bank Name">
               <input value={ready ? `${repledge.bankName} · ${repledge.bankAccNo}` : ''} readOnly />
             </Row>
-            <Row label="Open / Due">
-              {ready ? `${fmtDate(repledge.openDate)} — ${fmtDate(repledge.dueDate)}` : '—'}
-            </Row>
-            <Row label="Rate">{ready ? `${repledge.interestRate}% · ${repledge.compounding}` : '—'}</Row>
+            <Row label="Loan Amount">{ready ? fmtMoney(repledge.loanAmount) : '—'}</Row>
+            <Row label="Open Date">{fmtDate(repledge.openDate) || '—'}</Row>
+            <Row label="Due Date">{fmtDate(repledge.dueDate) || '—'}</Row>
+            <Row label="Period">{ready ? `${repledge.periodMonths} months` : '—'}</Row>
+            <Row label="Scheme Code">{repledge.schemeCode || '—'}</Row>
+            <Row label="Account Status">{ready ? (repledge.status === 'C' ? 'C-Closed' : 'A-Active') : '—'}</Row>
+            <Row label="Interest Rate">{ready ? `${repledge.interestRate}%` : '—'}</Row>
+            <Row label="Compounding">{repledge.compounding || '—'}</Row>
+            <Row label="Closing Balance">{ready ? fmtMoney(quote.principalDue) : '—'}</Row>
+            <Row label="Transaction Id"><span className="mono">{transId || '—'}</span></Row>
             <Row label="Trans. date">
               <input type="date" value={form.transDate} onChange={set('transDate')} disabled={!ready} />
             </Row>
@@ -377,8 +404,27 @@ export function RepledgeClosure({ navigate, id, accNo: initialAccNo }) {
             <Row label="Interest paid">
               <input type="number" step="0.01" value={form.interestPayable} onChange={set('interestPayable')} disabled={!ready} />
             </Row>
-            <Row label="Total">
+            <Row label="Net Amount">
               <input value={fmtMoney(total)} readOnly />
+            </Row>
+            <Row label="Mode of Payment">
+              <select value={form.glCodeCr} onChange={set('glCodeCr')} disabled={!ready}>
+                {glAccounts.map((g) => (
+                  <option key={g.code} value={g.code}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </Row>
+            <Row label="Debit Account">
+              <select value={form.glCodeDr} onChange={set('glCodeDr')} disabled={!ready}>
+                <option value="">Same as the re-pledge</option>
+                {glAccounts.map((g) => (
+                  <option key={g.code} value={g.code}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
             </Row>
             <Row label="Narration" span={3}>
               <input value={form.narration} onChange={set('narration')} disabled={!ready} />

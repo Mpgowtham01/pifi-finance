@@ -5,6 +5,10 @@ import { fmtDate, fmtMoney } from '../../lib/format.js'
 // One savings account in full, the counter transaction screen, and the
 // closure — SB_Tran.aspx and SB_Closure.aspx rebuilt.
 
+// As the old screens spelled the mode of operation out.
+const MOP_LABELS = { S: 'S-Single', E: 'E-EorS', F: 'F-ForS', A: 'A-AorS', J: 'Joint', M: 'M-Minor' }
+const statusLabel = (s) => (s === 'C' ? 'C-Closed' : 'A-Active')
+
 const today = () => new Date().toISOString().slice(0, 10)
 const n = (v) => (v === '' || v === null || v === undefined || isNaN(Number(v)) ? 0 : Number(v))
 
@@ -229,6 +233,7 @@ export function SavingsView({ navigate, id, session }) {
 export function SavingsTransactionScreen({ navigate, accNo: initialAccNo }) {
   const [accNo, setAccNo] = useState(initialAccNo || '')
   const [account, setAccount] = useState(null)
+  const [transId, setTransId] = useState('')
   const [glAccounts, setGlAccounts] = useState([])
   const [type, setType] = useState('Credit')
   const [amount, setAmount] = useState('')
@@ -245,6 +250,7 @@ export function SavingsTransactionScreen({ navigate, accNo: initialAccNo }) {
       .get('/savings/new')
       .then((d) => {
         setGlAccounts(d.glAccounts)
+        setTransId(d.transId)
         setGlCode((c) => c || d.glAccounts[0]?.code || '')
       })
       .catch(() => {})
@@ -376,15 +382,36 @@ export function SavingsTransactionScreen({ navigate, accNo: initialAccNo }) {
                 </button>
               </div>
             </Row>
-            <Row label="Customer">
+            <Row label="Acc. Open Date">
+              <input value={fmtDate(account?.openDate)} readOnly tabIndex={-1} />
+            </Row>
+
+            <Row label="Customer Id">
+              <input className="mono" value={account?.custId || ''} readOnly tabIndex={-1} />
+            </Row>
+            <Row label="Customer Info">
               <input value={account ? `${account.custId} / ${account.customerName}` : ''} readOnly />
             </Row>
 
-            <Row label="Scheme">
+            <Row label="Scheme Code">
               <input value={account?.schemeName || account?.schemeCode || ''} readOnly />
             </Row>
-            <Row label="Balance">
+            <Row label="Nominee">
+              <input value={account?.nominee?.name || ''} readOnly tabIndex={-1} />
+            </Row>
+
+            <Row label="Mode of Operation">
+              <input value={account ? MOP_LABELS[account.mop] || account.mop : ''} readOnly tabIndex={-1} />
+            </Row>
+            <Row label="Account Status">
+              <input value={account ? statusLabel(account.status) : ''} readOnly tabIndex={-1} />
+            </Row>
+
+            <Row label="Closing Balance">
               <input value={account ? fmtMoney(account.balance) : ''} readOnly />
+            </Row>
+            <Row label="Transaction Id">
+              <input className="mono w-sm" value={transId} readOnly tabIndex={-1} />
             </Row>
 
             <Row label="Transaction Type" req>
@@ -397,7 +424,7 @@ export function SavingsTransactionScreen({ navigate, accNo: initialAccNo }) {
               <input type="date" value={transDate} onChange={(e) => setTransDate(e.target.value)} />
             </Row>
 
-            <Row label="Amount" req>
+            <Row label="Trans. Amount" req>
               <input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
             </Row>
             <Row label="Balance after">
@@ -441,6 +468,7 @@ export function SavingsTransactionScreen({ navigate, accNo: initialAccNo }) {
 /* ------------------------------------------------------------- closure */
 
 export function SavingsClosure({ navigate, accNo: initialAccNo }) {
+  const [transId, setTransId] = useState('')
   const [accNo, setAccNo] = useState(initialAccNo || '')
   const [quote, setQuote] = useState(null)
   const [glAccounts, setGlAccounts] = useState([])
@@ -455,6 +483,7 @@ export function SavingsClosure({ navigate, accNo: initialAccNo }) {
       .get('/savings/new')
       .then((d) => {
         setGlAccounts(d.glAccounts)
+        setTransId(d.transId)
         setForm((f) => ({ ...f, glCode: f.glCode || d.glAccounts[0]?.code || '' }))
       })
       .catch(() => {})
@@ -597,21 +626,49 @@ export function SavingsClosure({ navigate, accNo: initialAccNo }) {
           </div>
 
           <div className="frm" style={{ marginTop: 18 }}>
-            <Row label="A/c Open Date">
+            <Row label="Acc. Open Date">
               <input value={fmtDate(a.openDate)} readOnly />
             </Row>
-            <Row label="ROI">
+            <Row label="Customer Id">
+              <input className="mono" value={a.custId || ''} readOnly tabIndex={-1} />
+            </Row>
+
+            <Row label="Customer Info">
+              <input value={ready ? `${a.custId} / ${a.customerName}` : ''} readOnly tabIndex={-1} />
+            </Row>
+            <Row label="Scheme Type">
+              <input value={a.schemeName || a.schemeCode || ''} readOnly tabIndex={-1} />
+            </Row>
+
+            <Row label="Nominee">
+              <input value={a.nominee?.name || ''} readOnly tabIndex={-1} />
+            </Row>
+            <Row label="Mode of Operation">
+              <input value={ready ? MOP_LABELS[a.mop] || a.mop : ''} readOnly tabIndex={-1} />
+            </Row>
+
+            <Row label="Account Status">
+              <input value={ready ? statusLabel(a.status) : ''} readOnly tabIndex={-1} />
+            </Row>
+            <Row label="Interest Rate">
               <input value={ready ? `${a.interestRate}%` : ''} readOnly />
             </Row>
 
+            <Row label="Transaction Id">
+              <input className="mono w-sm" value={transId} readOnly tabIndex={-1} />
+            </Row>
             <Row label="Transaction Date">
               <input type="date" value={form.transDate} onChange={set('transDate')} disabled={!ready} />
             </Row>
+            <Row label="Principal">
+              <input value={ready ? fmtMoney(q.balance) : ''} readOnly tabIndex={-1} />
+            </Row>
+
             <Row label="Interest">
               <input type="number" step="0.01" value={form.interest} onChange={set('interest')} disabled={!ready} />
             </Row>
 
-            <Row label="Closure Charges">
+            <Row label="Closure Chgs">
               <input
                 type="number"
                 step="0.01"
@@ -620,7 +677,7 @@ export function SavingsClosure({ navigate, accNo: initialAccNo }) {
                 disabled={!ready}
               />
             </Row>
-            <Row label="Amount payable">
+            <Row label="Net Payable">
               <input value={ready ? fmtMoney(payable) : ''} readOnly />
             </Row>
 
