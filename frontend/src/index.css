@@ -344,18 +344,103 @@ table.grid tr:last-child td { border-bottom: 0; }
 .modal .modal-foot { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
 
 /* ---------- login ---------- */
-.login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 20px;
-  background: radial-gradient(1200px 600px at 20% 0%, #1e293b, #0f172a); }
-.login-card { width: 100%; max-width: 400px; background: var(--surface);
-  border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
-.login-card .head { padding: 28px 28px 10px; text-align: center; }
-.login-card .head .logo {
-  width: 64px; height: 64px; border-radius: 16px; margin: 0 auto 12px;
-  display: block; object-fit: contain; background: #fff;
+.login-wrap {
+  min-height: 100vh; display: grid; place-items: center; padding: 24px;
+  background:
+    radial-gradient(900px 480px at 12% -10%, rgba(212, 175, 55, 0.16), transparent 60%),
+    radial-gradient(1100px 600px at 92% 110%, rgba(79, 70, 229, 0.20), transparent 62%),
+    linear-gradient(160deg, #111c33 0%, #0b1324 55%, #070d19 100%);
 }
-.login-card .head h1 { font-size: 20px; margin: 0; }
-.login-card .head p { color: var(--text-muted); margin: 4px 0 0; font-size: 13px; }
-.login-card .body { padding: 20px 28px 28px; display: flex; flex-direction: column; gap: 14px; }
+
+/* The two halves sit in one card so the crest and the form read as one thing. */
+.login-shell {
+  width: 100%; max-width: 940px;
+  display: grid; grid-template-columns: 1.05fr 1fr;
+  background: var(--surface); border-radius: 20px; overflow: hidden;
+  box-shadow: 0 30px 70px rgba(2, 6, 23, 0.55), 0 2px 8px rgba(2, 6, 23, 0.4);
+  animation: login-rise 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@keyframes login-rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.99); }
+}
+
+/* ---- the brand half ---- */
+.login-aside {
+  position: relative; padding: 46px 42px;
+  display: flex; flex-direction: column; gap: 22px;
+  color: #e8eefc; background: linear-gradient(165deg, #16233f 0%, #0d1630 60%, #0a1026 100%);
+}
+/* A soft gold wash behind the crest, picked from the crest itself. */
+.login-aside::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(420px 260px at 22% 16%, rgba(212, 175, 55, 0.22), transparent 70%);
+}
+.login-aside > * { position: relative; }
+.login-brand { display: flex; align-items: center; gap: 14px; }
+.login-brand .crest {
+  width: 62px; height: 62px; flex: none; object-fit: contain;
+  border-radius: 16px; padding: 7px; background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.login-brand h1 {
+  margin: 0; font-size: 23px; line-height: 1.2; letter-spacing: -0.01em; color: #fff;
+}
+.login-brand span {
+  display: block; margin-top: 3px; font-size: 12px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase; color: rgba(212, 175, 55, 0.95);
+}
+.login-aside p.lede { margin: 0; font-size: 14px; line-height: 1.65; color: #b9c6e4; max-width: 34ch; }
+
+/* What is behind the sign-in, so a new clerk knows where they have landed. */
+.login-modules { display: flex; flex-wrap: wrap; gap: 7px; margin-top: auto; }
+.login-modules span {
+  font-size: 12px; padding: 5px 11px; border-radius: 999px;
+  color: #cdd9f2; background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+.login-foot {
+  font-size: 11.5px; color: #7d8db3; display: flex; align-items: center; gap: 8px;
+}
+.login-foot .dot { width: 5px; height: 5px; border-radius: 50%; background: #3fbf7f; flex: none; }
+
+/* ---- the form half ---- */
+.login-main { padding: 46px 42px; display: flex; flex-direction: column; justify-content: center; }
+.login-main h2 { margin: 0; font-size: 21px; letter-spacing: -0.01em; }
+.login-main .sub { margin: 5px 0 26px; color: var(--text-muted); font-size: 13.5px; }
+.login-main form { display: flex; flex-direction: column; gap: 15px; }
+.login-main .field label { font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: #475569; }
+.login-main .field input,
+.login-main .field select {
+  padding: 11px 13px; font-size: 14.5px; border-radius: 9px; background: var(--surface-2);
+}
+.login-main .field input:focus,
+.login-main .field select:focus { background: var(--surface); }
+.login-main .btn.primary {
+  margin-top: 6px; padding: 12px 16px; font-size: 15px; font-weight: 600;
+  border-radius: 9px; justify-content: center;
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.28);
+}
+.login-main .btn.primary:disabled { box-shadow: none; }
+
+/* The password box and its reveal share one frame. */
+.pw-field { position: relative; }
+.pw-field input { padding-right: 62px; }
+.pw-field button {
+  position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+  border: 0; background: transparent; cursor: pointer; padding: 5px 7px;
+  font: inherit; font-size: 12px; font-weight: 600; color: var(--text-muted); border-radius: 6px;
+}
+.pw-field button:hover { color: var(--primary); background: var(--primary-soft); }
+
+.login-hint { margin: 20px 0 0; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+@media (max-width: 780px) {
+  .login-shell { grid-template-columns: 1fr; max-width: 420px; }
+  .login-aside { padding: 30px 28px; gap: 16px; }
+  .login-aside p.lede, .login-modules, .login-foot { display: none; }
+  .login-main { padding: 28px; }
+}
 
 /* ---------- dashboard ---------- */
 .dash { display: flex; flex-direction: column; gap: 20px; }
