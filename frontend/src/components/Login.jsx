@@ -130,25 +130,27 @@ export default function Login({ onDone }) {
               />
             </div>
 
-            <div className="field pw-field">
+            <div className="field">
               <label htmlFor="lg-pass">
                 Password <span className="req">*</span>
               </label>
-              <input
-                id="lg-pass"
-                type={showPassword ? 'text' : 'password'}
-                value={form.password}
-                onChange={set('password')}
-                required
-                autoComplete={needsSetup ? 'new-password' : 'current-password'}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? 'Hide the password' : 'Show the password'}
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
+              <div className="pw-box">
+                <input
+                  id="lg-pass"
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={set('password')}
+                  required
+                  autoComplete={needsSetup ? 'new-password' : 'current-password'}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide the password' : 'Show the password'}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
 
             {!needsSetup && (

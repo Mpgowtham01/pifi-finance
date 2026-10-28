@@ -499,15 +499,17 @@ table.grid tfoot th {
 }
 .login-main .btn.primary:disabled { box-shadow: none; }
 
-/* The password box and its reveal share one frame. */
-.pw-field { position: relative; }
-.pw-field input { padding-right: 62px; }
-.pw-field button {
-  position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
-  border: 0; background: transparent; cursor: pointer; padding: 5px 7px;
-  font: inherit; font-size: 12px; font-weight: 600; color: var(--text-muted); border-radius: 6px;
+/* The password box and its reveal share one frame — the frame is the input,
+   not the field, or the button centres itself on the label as well. */
+.pw-box { position: relative; display: flex; }
+.pw-box input { padding-right: 64px; }
+.pw-box button {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  border: 0; background: transparent; cursor: pointer; padding: 6px 8px;
+  font: inherit; font-size: 12px; font-weight: 600; color: var(--text-muted);
+  border-radius: 6px; line-height: 1;
 }
-.pw-field button:hover { color: var(--primary); background: var(--primary-soft); }
+.pw-box button:hover { color: var(--primary); background: var(--primary-soft); }
 
 .login-hint { margin: 20px 0 0; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
 
