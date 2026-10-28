@@ -236,7 +236,7 @@ export default function Layout({ session, route, navigate, onLogout, onSwitchBra
   // Collapsed to an icon rail on a wide screen. Remembered between visits.
   const [rail, setRail] = useState(() => {
     try {
-      return localStorage.getItem('pifi.rail') === '1'
+      return localStorage.getItem('thangarathnam.rail') === '1'
     } catch {
       return false
     }
@@ -248,7 +248,7 @@ export default function Layout({ session, route, navigate, onLogout, onSwitchBra
 
   useEffect(() => {
     try {
-      localStorage.setItem('pifi.rail', rail ? '1' : '0')
+      localStorage.setItem('thangarathnam.rail', rail ? '1' : '0')
     } catch {
       /* private window — the rail just will not be remembered */
     }

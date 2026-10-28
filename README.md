@@ -1,6 +1,6 @@
-# PiFi Finance (rebuild)
+# Thangarathnam Finance (rebuild)
 
-A rebuild of the Thangarathnam Finance ("PiFi") co-operative / NBFC back-office.
+A rebuild of the Thangarathnam Finance co-operative / NBFC back-office.
 Same flow and same data as the system it replaces, in a new design. The captured
 reference and the full analysis are in the sibling repo at
 `../FinanceProject/reference-pifi/`.

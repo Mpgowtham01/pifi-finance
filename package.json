@@ -1,8 +1,8 @@
 {
-  "name": "pifi-finance",
+  "name": "thangarathnam-finance",
   "private": true,
   "version": "0.1.0",
-  "description": "PiFi — co-operative / NBFC finance back-office (rebuild). backend/ and frontend/ are two independent projects.",
+  "description": "Thangarathnam Finance — co-operative / NBFC back-office (rebuild). backend/ and frontend/ are two independent projects.",
   "scripts": {
     "setup": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "dev": "concurrently -n api,web -c cyan,magenta \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",

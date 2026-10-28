@@ -4,7 +4,7 @@
 # then asks you for MONGODB_URI. Everything else is set here.
 services:
   - type: web
-    name: pifi-finance
+    name: thangarathnam-finance
     runtime: node
     plan: free
     region: singapore # closest to Tamil Nadu

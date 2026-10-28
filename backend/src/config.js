@@ -31,5 +31,5 @@ export const config = {
   port: Number(process.env.PORT || 4000),
   isProd: process.env.NODE_ENV === 'production',
   tokenHours: Number(process.env.TOKEN_HOURS || 12),
-  cookieName: 'pifi_session',
+  cookieName: 'thangarathnam_session',
 }
