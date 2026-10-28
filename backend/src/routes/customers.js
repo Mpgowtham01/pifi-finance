@@ -6,13 +6,13 @@ import { requireAuth } from '../middleware/auth.js'
 import { escapeRegex } from '../lib/escapeRegex.js'
 import { httpError } from '../lib/httpError.js'
 import { accountsForCustomer, registeredAccountTypes } from '../lib/accounts.js'
+import { parseImage, sendImage } from '../lib/image.js'
 
 const router = Router()
 router.use(requireAuth)
 
 // Starting customer id per branch, mirroring the old "10100130"-style numbers.
 const CUST_ID_START = 10100001
-// Photos are resized in the browser before upload; this is a backstop.
 
 /* ------------------------------------------------------------------ list */
 
