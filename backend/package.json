@@ -16,7 +16,8 @@
     "seed-shares": "node src/seed-shares.js",
     "crawl-shares": "node tools/crawl-shares.mjs",
     "seed-savings": "node src/seed-savings.js",
-    "crawl-savings": "node tools/crawl-savings.mjs"
+    "crawl-savings": "node tools/crawl-savings.mjs",
+    "capture-pages": "node tools/capture-pages.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
